@@ -8,21 +8,21 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.eobjects.analyzer.beans.api.Analyzer;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.configuration.InjectionManager;
 import org.eobjects.analyzer.data.InputColumn;
 import org.eobjects.analyzer.data.InputRow;
-import org.eobjects.analyzer.data.MetaModelInputColumn;
 import org.eobjects.analyzer.data.MockInputRow;
 import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.analyzer.job.TransformerJob;
 import org.eobjects.analyzer.job.concurrent.SingleThreadedTaskRunner;
 import org.eobjects.analyzer.job.concurrent.TaskListener;
 import org.eobjects.analyzer.job.concurrent.TaskRunner;
+import org.eobjects.analyzer.job.runner.AnalysisJobMetrics;
 import org.eobjects.analyzer.job.runner.AnalysisListener;
 import org.eobjects.analyzer.job.runner.InfoLoggingAnalysisListener;
 import org.eobjects.analyzer.job.runner.OutcomeSink;
@@ -37,12 +37,10 @@ import org.eobjects.analyzer.util.SourceColumnFinder;
 import org.eobjects.hadoopdatacleaner.HadoopDataCleanerTool;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.job.tasks.ConsumeRowTask;
-import org.eobjects.hadoopdatacleaner.mapreduce.writables.TextArrayWritable;
-import org.eobjects.metamodel.schema.ImmutableColumn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWritable, TextArrayWritable> {
+public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWritable, SortedMapWritable> {
 
     private static final Logger logger = LoggerFactory.getLogger(HadoopDataCleanerMapper.class);
 
@@ -57,8 +55,6 @@ public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWrit
     private Collection<InputColumn<?>> jobColumns;
 
     private Collection<Boolean> usedColumns;
-
-    private LongWritable unit = new LongWritable(1);
 
     @Override
     public void map(LongWritable key, Text csvLine, Context context) throws IOException, InterruptedException {
@@ -83,6 +79,17 @@ public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWrit
             Object value = transformedRow.getValue(inputColumn);
             logger.info("\t" + inputColumn.getName() + ": " + value);
         }
+        
+        SortedMapWritable rowWritable = new SortedMapWritable();
+        for (InputColumn<?> inputColumn : transformedRow.getInputColumns()) {
+            String columnName = inputColumn.getName();
+            Object value = transformedRow.getValue(inputColumn);
+            System.out.println(columnName);
+            if (value == null)
+                System.out.println(columnName);
+            System.out.println(value.toString());
+            rowWritable.put(new Text(columnName), new Text(value.toString()));
+        }
 
         // TextArrayWritable result =
         // transformRowToTextArrayWritable(transformedRow);
@@ -90,7 +97,7 @@ public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWrit
         // clean up
         publisher.closeConsumers();
 
-        // context.write(unit, new Text);
+         context.write(key, rowWritable);
     }
 
     private List<RowProcessingConsumer> prepareConsumers(RowProcessingPublisher publisher) {
@@ -136,9 +143,9 @@ public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWrit
         OutcomeSink outcomes = new OutcomeSinkImpl();
         ConsumeRowTask task = new ConsumeRowTask(consumers, 0, publisher.getRowProcessingMetrics(), row,
                 analysisListener, outcomes);
-
+        
         task.execute();
-        return task.getRow();
+        return task.getCurrentRow();
     }
 
     // private TextArrayWritable transformRowToTextArrayWritable(InputRow row) {
@@ -183,18 +190,6 @@ public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWrit
         Iterator<InputColumn<?>> jobColumnsIterator = jobColumns.iterator();
         Iterator<Boolean> usedColumnsIterator = usedColumns.iterator();
         
-        int usedColumnsCount = 0;
-        for (Boolean used : usedColumns) {
-            if (used == true)
-                usedColumnsCount++;
-        }
-
-//        if (values.length != usedColumnsCount) {
-//            throw new IllegalStateException(
-//                    "The number of values in the row does not match the numbers of columns declared. Values: "
-//                            + values.length + ", columns declared: " + jobColumns.size());
-//        }
-
         MockInputRow row = new MockInputRow();
         for (String value : values) {
             Boolean used = usedColumnsIterator.next();
@@ -228,6 +223,7 @@ public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWrit
 
     private AnalysisListener prepareAnalysisListener() {
         return new InfoLoggingAnalysisListener() {
+            
             @Override
             public void errorInTransformer(AnalysisJob job, TransformerJob transformerJob, InputRow row,
                     Throwable throwable) {
@@ -237,6 +233,12 @@ public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWrit
             @Override
             public void errorUknown(AnalysisJob job, Throwable throwable) {
                 throwable.printStackTrace();
+            }
+             
+            @Override
+            public void jobSuccess(AnalysisJob job, AnalysisJobMetrics metrics) {
+                logger.info("Job finished successfully.");
+                // FIXME: Not appearing anywhere...
             }
         };
 

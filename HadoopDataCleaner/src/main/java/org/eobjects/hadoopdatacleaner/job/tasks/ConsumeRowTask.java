@@ -42,6 +42,10 @@ public final class ConsumeRowTask implements RowProcessingChain {
     private final int _consumerIndex;
     private final RowProcessingMetrics _rowProcessingMetrics;
     private final InputRow _row;
+    /**
+     * Holds the current state of the row between consumers.
+     */
+    private InputRow _currentRow;
     private final AnalysisListener _analysisListener;
     private final OutcomeSink _outcomes;
 
@@ -106,18 +110,22 @@ public final class ConsumeRowTask implements RowProcessingChain {
 
     @Override
     public void processNext(InputRow row, int distinctCount, OutcomeSink outcomes) {
+        this._currentRow = row;
+        
         final int nextIndex = _consumerIndex + 1;
         final ConsumeRowTask subtask = new ConsumeRowTask(_consumers, nextIndex, _rowProcessingMetrics, row,
                 _analysisListener, outcomes);
         subtask.execute(false);
     }
     
+ 
     /**
-     * Returns the row associated with the instance of the {@link ConsumeRowTask}.
+     * The getter for the _currentRow field. Enables fetching the intermediate results between the consumers.
      * 
-     * @return The row associated with this instance.
+     * @return The current state of the row being processed in the {@link ConsumeRowTask}.
      */
-    public InputRow getRow() {
-        return _row;
+    public InputRow getCurrentRow() {
+        return _currentRow;
     }
+
 }

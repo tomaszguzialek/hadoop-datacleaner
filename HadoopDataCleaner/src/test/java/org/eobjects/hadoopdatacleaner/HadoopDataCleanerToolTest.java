@@ -89,12 +89,12 @@ public class HadoopDataCleanerToolTest {
 			concatenator.addInputColumns(ajb.getSourceColumnByName("countrycodes.csv.countrycodes.ISO 3166-3"));
 			concatenator.setConfiguredProperty("Separator", "_");
 			
-			TransformerJobBuilder<TokenizerTransformer> tokenizer = ajb.addTransformer(TokenizerTransformer.class);
-			tokenizer.setConfiguredProperty("Token target", TokenizerTransformer.TokenTarget.COLUMNS);
-			tokenizer.addInputColumns(concatenator.getOutputColumns().get(0));
-			tokenizer.setConfiguredProperty("Number of tokens", 2);
-			tokenizer.setConfiguredProperty("Delimiters", new char[] { '_' });
-			tokenizer.getOutputColumns().get(0).setName("tokenized");
+//			TransformerJobBuilder<TokenizerTransformer> tokenizer = ajb.addTransformer(TokenizerTransformer.class);
+//			tokenizer.setConfiguredProperty("Token target", TokenizerTransformer.TokenTarget.COLUMNS);
+//			tokenizer.addInputColumns(concatenator.getOutputColumns().get(0));
+//			tokenizer.setConfiguredProperty("Number of tokens", 2);
+//			tokenizer.setConfiguredProperty("Delimiters", new char[] { '_' });
+//			tokenizer.getOutputColumns().get(0).setName("tokenized");
 			
 			AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer = ajb.addAnalyzer(ValueDistributionAnalyzer.class);
 			valueDistributionAnalyzer.addInputColumn(ajb.getSourceColumnByName("countrycodes.csv.countrycodes.Country name"));

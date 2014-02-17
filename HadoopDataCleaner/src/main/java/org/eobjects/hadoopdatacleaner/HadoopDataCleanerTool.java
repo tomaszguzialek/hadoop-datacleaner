@@ -27,6 +27,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -36,7 +37,6 @@ import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.mapreduce.HadoopDataCleanerMapper;
 import org.eobjects.hadoopdatacleaner.mapreduce.HadoopDataCleanerReducer;
-import org.eobjects.hadoopdatacleaner.mapreduce.writables.TextArrayWritable;
 
 public final class HadoopDataCleanerTool extends Configured implements Tool {
 
@@ -90,7 +90,7 @@ public final class HadoopDataCleanerTool extends Configured implements Tool {
 		job.setReducerClass(HadoopDataCleanerReducer.class);
 
 		job.setMapOutputKeyClass(LongWritable.class);
-		job.setMapOutputValueClass(TextArrayWritable.class);
+		job.setMapOutputValueClass(SortedMapWritable.class);
 
 		FileSystem hdfs = FileSystem.get(mapReduceConfiguration);
 		if (hdfs.exists(new Path(output)))

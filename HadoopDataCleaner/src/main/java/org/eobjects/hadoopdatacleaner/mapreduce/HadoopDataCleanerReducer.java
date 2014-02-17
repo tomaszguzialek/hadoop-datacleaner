@@ -1,36 +1,34 @@
 package org.eobjects.hadoopdatacleaner.mapreduce;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.eobjects.hadoopdatacleaner.mapreduce.writables.TextArrayWritable;
 
-public class HadoopDataCleanerReducer extends
-		Reducer<LongWritable, TextArrayWritable, LongWritable, Text> {
+public class HadoopDataCleanerReducer extends Reducer<LongWritable, SortedMapWritable, LongWritable, Text> {
 
-	@Override
-	public void reduce(LongWritable key, Iterable<TextArrayWritable> values,
-			Context context) throws IOException, InterruptedException {
-		Text finalResult = new Text();
-		
-		Writable[] content = values.iterator().next().get();
-		for (Writable writable : content) {
-			finalResult = (Text) writable;
-			break;
-		}
-		
-//		for (TextArrayWritable textArrayWritable : values) {
-//			Writable[] writables = textArrayWritable.get();
-//			for (Writable writable : writables) {
-//				Text text = (Text) writable;
-//				finalResult = new Text(finalResult.toString() + text.toString());
-//			}
-//			break;
-//		}
-		context.write(key, finalResult);
-	}
+    @Override
+    public void reduce(LongWritable key, Iterable<SortedMapWritable> rows, Context context) throws IOException,
+            InterruptedException {
+        Text finalText = new Text();
+        for (SortedMapWritable row : rows) {
+            for (Iterator<Entry<WritableComparable, Writable>> iterator = row.entrySet().iterator(); iterator.hasNext();) {
+                Text value = ((Text) iterator.next().getValue());
+                finalText.set(finalText.toString() + value.toString());
+                if (iterator.hasNext())
+                    finalText.set(finalText.toString() + ";");
+                else
+                    finalText.set(finalText.toString() + "\n");
+            }
+        }
+
+        context.write(key, finalText);
+    }
 
 }
