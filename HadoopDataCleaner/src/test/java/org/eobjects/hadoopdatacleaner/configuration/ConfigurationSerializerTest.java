@@ -2,6 +2,7 @@ package org.eobjects.hadoopdatacleaner.configuration;
 
 import junit.framework.Assert;
 
+import org.apache.hadoop.util.StringUtils;
 import org.eobjects.analyzer.beans.StringAnalyzer;
 import org.eobjects.analyzer.beans.transform.ConcatenatorTransformer;
 import org.eobjects.analyzer.beans.transform.TokenizerTransformer;
@@ -112,8 +113,12 @@ public class ConfigurationSerializerTest {
 						deserializedAnalysisJob);
 		String expected = analysisJobXml.replace('\t', ' ').replace('\n', ' ')
 				.replace('\r', ' ').replace('\f', ' ');
+		String updatedTagStart = "<updated-date>";
+		String updatedTagEnd = "</updated-date>";
+		expected = expected.substring(0, expected.indexOf(updatedTagStart)) + expected.substring(expected.indexOf(updatedTagEnd) + updatedTagEnd.length());
 		serializedAnalysisJobXml = serializedAnalysisJobXml.replace('\t', ' ')
 				.replace('\n', ' ').replace('\r', ' ').replace('\f', ' ');
+		serializedAnalysisJobXml = serializedAnalysisJobXml.substring(0, serializedAnalysisJobXml.indexOf(updatedTagStart)) + serializedAnalysisJobXml.substring(serializedAnalysisJobXml.indexOf(updatedTagEnd) + updatedTagEnd.length());
 		Assert.assertEquals(expected, serializedAnalysisJobXml);
 	}
 
