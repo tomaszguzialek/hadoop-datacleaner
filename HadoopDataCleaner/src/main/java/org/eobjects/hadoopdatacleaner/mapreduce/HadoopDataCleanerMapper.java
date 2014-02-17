@@ -1,9 +1,9 @@
 package org.eobjects.hadoopdatacleaner.mapreduce;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -16,6 +16,7 @@ import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.configuration.InjectionManager;
 import org.eobjects.analyzer.data.InputColumn;
 import org.eobjects.analyzer.data.InputRow;
+import org.eobjects.analyzer.data.MetaModelInputColumn;
 import org.eobjects.analyzer.data.MockInputRow;
 import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.analyzer.job.TransformerJob;
@@ -27,224 +28,218 @@ import org.eobjects.analyzer.job.runner.InfoLoggingAnalysisListener;
 import org.eobjects.analyzer.job.runner.OutcomeSink;
 import org.eobjects.analyzer.job.runner.OutcomeSinkImpl;
 import org.eobjects.analyzer.job.runner.ReferenceDataActivationManager;
-import org.eobjects.analyzer.job.runner.RowIdGenerator;
 import org.eobjects.analyzer.job.runner.RowProcessingConsumer;
 import org.eobjects.analyzer.job.runner.RowProcessingPublisher;
 import org.eobjects.analyzer.job.runner.RowProcessingPublishers;
-import org.eobjects.analyzer.job.tasks.ConsumeRowTask;
 import org.eobjects.analyzer.job.tasks.Task;
 import org.eobjects.analyzer.lifecycle.LifeCycleHelper;
-import org.eobjects.analyzer.result.AnalyzerResult;
-import org.eobjects.analyzer.util.ReflectionUtils;
 import org.eobjects.analyzer.util.SourceColumnFinder;
 import org.eobjects.hadoopdatacleaner.HadoopDataCleanerTool;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
+import org.eobjects.hadoopdatacleaner.job.tasks.ConsumeRowTask;
 import org.eobjects.hadoopdatacleaner.mapreduce.writables.TextArrayWritable;
+import org.eobjects.metamodel.schema.ImmutableColumn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class HadoopDataCleanerMapper extends
-		Mapper<LongWritable, Text, LongWritable, TextArrayWritable> {
+public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWritable, TextArrayWritable> {
 
-	private AnalyzerBeansConfiguration analyzerBeansConfiguration;
+    private static final Logger logger = LoggerFactory.getLogger(HadoopDataCleanerMapper.class);
 
-	private AnalysisJob analysisJob;
+    private AnalyzerBeansConfiguration analyzerBeansConfiguration;
 
-	private TaskRunner taskRunner = new SingleThreadedTaskRunner();
+    private AnalysisJob analysisJob;
 
-	private AnalysisListener analysisListener = prepareAnalysisListener();
+    private TaskRunner taskRunner = new SingleThreadedTaskRunner();
 
-	private final RowIdGenerator idGenerator = prepareIdGenerator();
+    private AnalysisListener analysisListener = prepareAnalysisListener();
 
-	private Collection<InputColumn<?>> sourceColumns;
-	
-	private LongWritable unit = new LongWritable(1);
+    private Collection<InputColumn<?>> jobColumns;
 
-	@Override
-	public void map(LongWritable key, Text csvLine, Context context)
-			throws IOException, InterruptedException {
+    private Collection<Boolean> usedColumns;
 
-		Configuration mapReduceConfiguration = context.getConfiguration();
-		String datastoresCsvLines = mapReduceConfiguration
-				.get(HadoopDataCleanerTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_CSV_KEY);
-		String analysisJobXml = mapReduceConfiguration
-				.get(HadoopDataCleanerTool.ANALYSIS_JOB_XML_KEY);
-		analyzerBeansConfiguration = ConfigurationSerializer.deserializeDatastoresFromCsv(datastoresCsvLines);
-		analysisJob = removeAnalyzers(ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration));
+    private LongWritable unit = new LongWritable(1);
 
-		InputRow inputRow = prepareRow(csvLine);
-		
+    @Override
+    public void map(LongWritable key, Text csvLine, Context context) throws IOException, InterruptedException {
 
-		RowProcessingPublisher publisher = prepareRowProcessingPublisher();
-		List<RowProcessingConsumer> consumers = prepareConsumers(publisher);
+        Configuration mapReduceConfiguration = context.getConfiguration();
+        String datastoresCsvLines = mapReduceConfiguration
+                .get(HadoopDataCleanerTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_CSV_KEY);
+        String analysisJobXml = mapReduceConfiguration.get(HadoopDataCleanerTool.ANALYSIS_JOB_XML_KEY);
+        analyzerBeansConfiguration = ConfigurationSerializer.deserializeDatastoresFromCsv(datastoresCsvLines);
+        analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
 
-		executeConsumeRowTask(inputRow, publisher, consumers);
+        parseHeaderRow(csvLine);
+        InputRow inputRow = prepareRow(csvLine);
 
-		TextArrayWritable resultArray = collectResults(consumers);
+        RowProcessingPublisher publisher = prepareRowProcessingPublisher();
+        List<RowProcessingConsumer> consumers = prepareConsumers(publisher);
 
-		// clean up
-		publisher.closeConsumers();
-		
-		context.write(unit, resultArray);
-	}
+        InputRow transformedRow = executeConsumeRowTask(inputRow, publisher, consumers);
 
-	private AnalysisJob removeAnalyzers(AnalysisJob analysisJob) {
-		// TODO: Removing analyzers
-//		Collection<AnalyzerJob> analyzerJobs = analysisJob.getAnalyzerJobs();
-//		for (AnalyzerJob analyzerJob : analyzerJobs) {
-//			analyzerJobs.remove(analyzerJob);
-//		}
-		return analysisJob;
-	}
+        logger.info("Transformed row: ");
+        for (InputColumn<?> inputColumn : transformedRow.getInputColumns()) {
+            Object value = transformedRow.getValue(inputColumn);
+            logger.info("\t" + inputColumn.getName() + ": " + value);
+        }
 
-	private TextArrayWritable collectResults(
-			List<RowProcessingConsumer> consumers) {
-		List<AnalyzerResult> results = new ArrayList<AnalyzerResult>();
-		for (RowProcessingConsumer consumer : consumers) {
-			Object component = consumer.getComponent();
-			if (component instanceof Analyzer<?>) {
-				AnalyzerResult result = ((Analyzer<?>) component).getResult();
-				results.add(result);
-			}
-		}
-		
-		TextArrayWritable resultArray = new TextArrayWritable();
-		Writable[] writableArray = new Writable[results.size()];
-		int i = 0;
-		for (AnalyzerResult analyzerResult : results) {
-			writableArray[i++] = new Text(analyzerResult.toString());
-			System.out.println("Result: \n" + analyzerResult.toString());
-		}
-		resultArray.set(writableArray);
-		return resultArray;
-	}
+        // TextArrayWritable result =
+        // transformRowToTextArrayWritable(transformedRow);
 
-	private List<RowProcessingConsumer> prepareConsumers(
-			RowProcessingPublisher publisher) {
-		publisher.initializeConsumers(new TaskListener() {
-			@Override
-			public void onError(Task task, Throwable throwable) {
-				System.out.println("Error");
-				throwable.printStackTrace();
-				System.exit(-1);
-			}
+        // clean up
+        publisher.closeConsumers();
 
-			@Override
-			public void onComplete(Task task) {
-				System.out.println("Completed initialization of consumers");
-			}
+        // context.write(unit, new Text);
+    }
 
-			@Override
-			public void onBegin(Task task) {
-				System.out.println("Beginning");
-			}
-		});
+    private List<RowProcessingConsumer> prepareConsumers(RowProcessingPublisher publisher) {
+        publisher.initializeConsumers(new TaskListener() {
+            @Override
+            public void onError(Task task, Throwable throwable) {
+                logger.error("Exception thrown while initializing consumers.", throwable);
+                System.exit(-1);
+            }
 
-		List<RowProcessingConsumer> consumers = publisher
-				.getConfigurableConsumers();
+            @Override
+            public void onComplete(Task task) {
+                logger.info("Consumers initialized successfully.");
+            }
 
-		consumers = RowProcessingPublisher.sortConsumers(consumers);
-		for (RowProcessingConsumer consumer : consumers) {
-			
-			// TODO: Crazy hack, should be improved in AnalyzerBeans
-			Method method = ReflectionUtils.getMethod(consumer.getClass(),
-					"setRowIdGenerator", true);
-			if (method != null) {
-				method.setAccessible(true);
-				try {
-					method.invoke(consumer, idGenerator);
-				} catch (Exception e) {
-					e.printStackTrace();
-					System.exit(-1);
-				}
-			}
-		}
-		return consumers;
-	}
+            @Override
+            public void onBegin(Task task) {
+                logger.info("Beginning the process of initializing consumers.");
+            }
+        });
 
-	private void executeConsumeRowTask(InputRow row,
-			RowProcessingPublisher publisher,
-			List<RowProcessingConsumer> consumers) {
+        List<RowProcessingConsumer> consumersWithoutAnalyzers = removeAnalyzers(publisher.getConfigurableConsumers());
 
-			OutcomeSink outcomes = new OutcomeSinkImpl();
-			ConsumeRowTask task = new ConsumeRowTask(consumers, 0,
-					publisher.getRowProcessingMetrics(), row, analysisListener,
-					outcomes);
+        consumersWithoutAnalyzers = RowProcessingPublisher.sortConsumers(consumersWithoutAnalyzers);
 
-			task.execute();
-	}
+        return consumersWithoutAnalyzers;
+    }
 
-	private InputRow prepareRow(Text csvLine) {
-		String[] values = csvLine.toString().split(";");
+    private List<RowProcessingConsumer> removeAnalyzers(List<RowProcessingConsumer> configurableConsumers) {
+        List<RowProcessingConsumer> consumersWithoutAnalyzers = new ArrayList<RowProcessingConsumer>();
+        for (RowProcessingConsumer rowProcessingConsumer : configurableConsumers) {
+            Object component = rowProcessingConsumer.getComponent();
+            if (!(component instanceof Analyzer<?>)) {
+                consumersWithoutAnalyzers.add(rowProcessingConsumer);
+            }
+        }
+        return consumersWithoutAnalyzers;
+    }
 
-		sourceColumns = analysisJob.getSourceColumns();
+    private InputRow executeConsumeRowTask(InputRow row, RowProcessingPublisher publisher,
+            List<RowProcessingConsumer> consumers) {
 
-		assert sourceColumns.size() == values.length;
-		
-		MockInputRow row = new MockInputRow();
-		for (String value : values) {
-			InputColumn<?> inputColumn = sourceColumns.iterator().next();
-			row.put(inputColumn, value);
-		}
-		return row;
-	}
+        OutcomeSink outcomes = new OutcomeSinkImpl();
+        ConsumeRowTask task = new ConsumeRowTask(consumers, 0, publisher.getRowProcessingMetrics(), row,
+                analysisListener, outcomes);
 
-	private RowProcessingPublisher prepareRowProcessingPublisher() {
-		InjectionManager injectionManager = analyzerBeansConfiguration
-				.getInjectionManager(analysisJob);
-		ReferenceDataActivationManager referenceDataActivationManager = new ReferenceDataActivationManager();
-		boolean includeNonDistributedTasks = true; // TODO: reconsider
-		LifeCycleHelper lifeCycleHelper = new LifeCycleHelper(injectionManager,
-				referenceDataActivationManager, includeNonDistributedTasks);
-		SourceColumnFinder sourceColumnFinder = new SourceColumnFinder();
-		sourceColumnFinder.addSources(analysisJob);
+        task.execute();
+        return task.getRow();
+    }
 
-		RowProcessingPublishers rowProcessingPublishers = new RowProcessingPublishers(
-				analysisJob, analysisListener, taskRunner, lifeCycleHelper,
-				sourceColumnFinder);
+    // private TextArrayWritable transformRowToTextArrayWritable(InputRow row) {
+    // TextArrayWritable resultArray = new TextArrayWritable();
+    // Writable[] writableArray = new Writable[results.size()];
+    // int i = 0;
+    // for (OutputColumns outputColumns : results) {
+    // writableArray[i++] = new Text(outputColumns.toString());
+    // System.out.println("Result: \n" + outputColumns.toString());
+    // }
+    // resultArray.set(writableArray);
+    // return resultArray;
+    // }
 
-		Collection<RowProcessingPublisher> publisherCollection = rowProcessingPublishers
-				.getRowProcessingPublishers();
+    private void parseHeaderRow(Text csvLine) {
+        if (usedColumns == null) {
+            usedColumns = new ArrayList<Boolean>();
+            jobColumns = analysisJob.getSourceColumns();
 
-		assert publisherCollection.size() == 1;
+            String[] values = csvLine.toString().split(";");
 
-		RowProcessingPublisher publisher = publisherCollection.iterator()
-				.next();
-		return publisher;
-	}
 
-	private RowIdGenerator prepareIdGenerator() {
-		return new RowIdGenerator() {
-			int nextVirtual;
-			int nextPhysical;
+            for (String value : values) {
+                Boolean found = false;
+                for (Iterator<InputColumn<?>> jobColumnsIterator = jobColumns.iterator(); jobColumnsIterator.hasNext();) {
+                    InputColumn<?> jobColumn = (InputColumn<?>) jobColumnsIterator.next();
+                    String shortName = jobColumn.getName().substring(jobColumn.getName().lastIndexOf('.') + 1);
+                    if (shortName.equals(value)) {
+                        found = true;
+                        break;
+                    }
+                }
+                usedColumns.add(found);
+            }
+        }
 
-			@Override
-			public int nextVirtualRowId() {
-				nextVirtual++;
-				return nextVirtual;
-			}
+    }
 
-			@Override
-			public int nextPhysicalRowId() {
-				nextPhysical++;
-				return nextPhysical;
-			}
-		};
-	}
+    private InputRow prepareRow(Text csvLine) {
+        String[] values = csvLine.toString().split(";");
 
-	private AnalysisListener prepareAnalysisListener() {
-		return new InfoLoggingAnalysisListener() {
-			@Override
-			public void errorInTransformer(AnalysisJob job,
-					TransformerJob transformerJob, InputRow row,
-					Throwable throwable) {
-				throwable.printStackTrace();
-			}
+        Iterator<InputColumn<?>> jobColumnsIterator = jobColumns.iterator();
+        Iterator<Boolean> usedColumnsIterator = usedColumns.iterator();
+        
+        int usedColumnsCount = 0;
+        for (Boolean used : usedColumns) {
+            if (used == true)
+                usedColumnsCount++;
+        }
 
-			@Override
-			public void errorUknown(AnalysisJob job, Throwable throwable) {
-				throwable.printStackTrace();
-			}
-		};
+//        if (values.length != usedColumnsCount) {
+//            throw new IllegalStateException(
+//                    "The number of values in the row does not match the numbers of columns declared. Values: "
+//                            + values.length + ", columns declared: " + jobColumns.size());
+//        }
 
-	}
-	
+        MockInputRow row = new MockInputRow();
+        for (String value : values) {
+            Boolean used = usedColumnsIterator.next();
+            if (used) {
+                InputColumn<?> inputColumn = jobColumnsIterator.next();
+                row.put(inputColumn, value);
+            }
+        }
+        return row;
+    }
+
+    private RowProcessingPublisher prepareRowProcessingPublisher() {
+        InjectionManager injectionManager = analyzerBeansConfiguration.getInjectionManager(analysisJob);
+        ReferenceDataActivationManager referenceDataActivationManager = new ReferenceDataActivationManager();
+        boolean includeNonDistributedTasks = true; // TODO: reconsider
+        LifeCycleHelper lifeCycleHelper = new LifeCycleHelper(injectionManager, referenceDataActivationManager,
+                includeNonDistributedTasks);
+        SourceColumnFinder sourceColumnFinder = new SourceColumnFinder();
+        sourceColumnFinder.addSources(analysisJob);
+
+        RowProcessingPublishers rowProcessingPublishers = new RowProcessingPublishers(analysisJob, analysisListener,
+                taskRunner, lifeCycleHelper, sourceColumnFinder);
+
+        Collection<RowProcessingPublisher> publisherCollection = rowProcessingPublishers.getRowProcessingPublishers();
+
+        assert publisherCollection.size() == 1;
+
+        RowProcessingPublisher publisher = publisherCollection.iterator().next();
+        return publisher;
+    }
+
+    private AnalysisListener prepareAnalysisListener() {
+        return new InfoLoggingAnalysisListener() {
+            @Override
+            public void errorInTransformer(AnalysisJob job, TransformerJob transformerJob, InputRow row,
+                    Throwable throwable) {
+                throwable.printStackTrace();
+            }
+
+            @Override
+            public void errorUknown(AnalysisJob job, Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        };
+
+    }
+
 }
