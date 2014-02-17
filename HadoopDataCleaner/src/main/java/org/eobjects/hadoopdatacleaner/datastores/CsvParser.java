@@ -1,4 +1,4 @@
-package org.eobjects.hadoopdatacleaner.mapreduce;
+package org.eobjects.hadoopdatacleaner.datastores;
 
 import java.util.ArrayList;
 import java.util.Collection;
