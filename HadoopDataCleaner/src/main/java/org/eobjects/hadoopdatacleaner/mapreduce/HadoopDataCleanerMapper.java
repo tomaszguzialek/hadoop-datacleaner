@@ -19,7 +19,6 @@ import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.analyzer.job.TransformerJob;
 import org.eobjects.analyzer.job.concurrent.SingleThreadedTaskRunner;
 import org.eobjects.analyzer.job.concurrent.TaskListener;
-import org.eobjects.analyzer.job.concurrent.TaskRunner;
 import org.eobjects.analyzer.job.runner.AnalysisJobMetrics;
 import org.eobjects.analyzer.job.runner.AnalysisListener;
 import org.eobjects.analyzer.job.runner.InfoLoggingAnalysisListener;
@@ -34,6 +33,7 @@ import org.eobjects.analyzer.lifecycle.LifeCycleHelper;
 import org.eobjects.analyzer.util.SourceColumnFinder;
 import org.eobjects.hadoopdatacleaner.HadoopDataCleanerTool;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
+import org.eobjects.hadoopdatacleaner.datastores.CsvParser;
 import org.eobjects.hadoopdatacleaner.job.tasks.ConsumeRowTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +45,6 @@ public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWrit
     private AnalyzerBeansConfiguration analyzerBeansConfiguration;
 
     private AnalysisJob analysisJob;
-
-    private TaskRunner taskRunner = new SingleThreadedTaskRunner();
 
     private AnalysisListener analysisListener = prepareAnalysisListener();
     
@@ -153,7 +151,7 @@ public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWrit
         sourceColumnFinder.addSources(analysisJob);
 
         RowProcessingPublishers rowProcessingPublishers = new RowProcessingPublishers(analysisJob, analysisListener,
-                taskRunner, lifeCycleHelper, sourceColumnFinder);
+                new SingleThreadedTaskRunner(), lifeCycleHelper, sourceColumnFinder);
 
         Collection<RowProcessingPublisher> publisherCollection = rowProcessingPublishers.getRowProcessingPublishers();
 
