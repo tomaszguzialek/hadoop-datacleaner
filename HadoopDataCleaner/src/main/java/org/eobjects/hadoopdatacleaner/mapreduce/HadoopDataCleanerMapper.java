@@ -3,7 +3,6 @@ package org.eobjects.hadoopdatacleaner.mapreduce;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -16,7 +15,6 @@ import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.configuration.InjectionManager;
 import org.eobjects.analyzer.data.InputColumn;
 import org.eobjects.analyzer.data.InputRow;
-import org.eobjects.analyzer.data.MockInputRow;
 import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.analyzer.job.TransformerJob;
 import org.eobjects.analyzer.job.concurrent.SingleThreadedTaskRunner;
@@ -51,10 +49,8 @@ public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWrit
     private TaskRunner taskRunner = new SingleThreadedTaskRunner();
 
     private AnalysisListener analysisListener = prepareAnalysisListener();
-
-    private Collection<InputColumn<?>> jobColumns;
-
-    private Collection<Boolean> usedColumns;
+    
+    private CsvParser csvParser = new CsvParser();
 
     @Override
     public void map(LongWritable key, Text csvLine, Context context) throws IOException, InterruptedException {
@@ -66,8 +62,8 @@ public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWrit
         analyzerBeansConfiguration = ConfigurationSerializer.deserializeDatastoresFromCsv(datastoresCsvLines);
         analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
 
-        parseHeaderRow(csvLine);
-        InputRow inputRow = prepareRow(csvLine);
+        csvParser.parseHeaderRow(csvLine, analysisJob);
+        InputRow inputRow = csvParser.prepareRow(csvLine);
 
         RowProcessingPublisher publisher = prepareRowProcessingPublisher();
         List<RowProcessingConsumer> consumers = prepareConsumers(publisher);
@@ -90,9 +86,6 @@ public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWrit
             System.out.println(value.toString());
             rowWritable.put(new Text(columnName), new Text(value.toString()));
         }
-
-        // TextArrayWritable result =
-        // transformRowToTextArrayWritable(transformedRow);
 
         // clean up
         publisher.closeConsumers();
@@ -148,58 +141,7 @@ public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWrit
         return task.getCurrentRow();
     }
 
-    // private TextArrayWritable transformRowToTextArrayWritable(InputRow row) {
-    // TextArrayWritable resultArray = new TextArrayWritable();
-    // Writable[] writableArray = new Writable[results.size()];
-    // int i = 0;
-    // for (OutputColumns outputColumns : results) {
-    // writableArray[i++] = new Text(outputColumns.toString());
-    // System.out.println("Result: \n" + outputColumns.toString());
-    // }
-    // resultArray.set(writableArray);
-    // return resultArray;
-    // }
-
-    private void parseHeaderRow(Text csvLine) {
-        if (usedColumns == null) {
-            usedColumns = new ArrayList<Boolean>();
-            jobColumns = analysisJob.getSourceColumns();
-
-            String[] values = csvLine.toString().split(";");
-
-
-            for (String value : values) {
-                Boolean found = false;
-                for (Iterator<InputColumn<?>> jobColumnsIterator = jobColumns.iterator(); jobColumnsIterator.hasNext();) {
-                    InputColumn<?> jobColumn = (InputColumn<?>) jobColumnsIterator.next();
-                    String shortName = jobColumn.getName().substring(jobColumn.getName().lastIndexOf('.') + 1);
-                    if (shortName.equals(value)) {
-                        found = true;
-                        break;
-                    }
-                }
-                usedColumns.add(found);
-            }
-        }
-
-    }
-
-    private InputRow prepareRow(Text csvLine) {
-        String[] values = csvLine.toString().split(";");
-
-        Iterator<InputColumn<?>> jobColumnsIterator = jobColumns.iterator();
-        Iterator<Boolean> usedColumnsIterator = usedColumns.iterator();
-        
-        MockInputRow row = new MockInputRow();
-        for (String value : values) {
-            Boolean used = usedColumnsIterator.next();
-            if (used) {
-                InputColumn<?> inputColumn = jobColumnsIterator.next();
-                row.put(inputColumn, value);
-            }
-        }
-        return row;
-    }
+    
 
     private RowProcessingPublisher prepareRowProcessingPublisher() {
         InjectionManager injectionManager = analyzerBeansConfiguration.getInjectionManager(analysisJob);
