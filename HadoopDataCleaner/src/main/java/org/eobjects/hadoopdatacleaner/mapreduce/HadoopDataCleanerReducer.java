@@ -18,7 +18,8 @@ public class HadoopDataCleanerReducer extends Reducer<LongWritable, SortedMapWri
             InterruptedException {
         Text finalText = new Text();
         for (SortedMapWritable row : rows) {
-            for (Iterator<Entry<WritableComparable, Writable>> iterator = row.entrySet().iterator(); iterator.hasNext();) {
+            for (@SuppressWarnings("rawtypes")
+            Iterator<Entry<WritableComparable, Writable>> iterator = row.entrySet().iterator(); iterator.hasNext();) {
                 Text value = ((Text) iterator.next().getValue());
                 finalText.set(finalText.toString() + value.toString());
                 if (iterator.hasNext())
