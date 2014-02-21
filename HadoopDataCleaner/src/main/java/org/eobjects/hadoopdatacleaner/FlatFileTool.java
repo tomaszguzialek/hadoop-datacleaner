@@ -51,25 +51,25 @@ import org.eobjects.analyzer.job.builder.AnalysisJobBuilder;
 import org.eobjects.analyzer.job.builder.AnalyzerJobBuilder;
 import org.eobjects.analyzer.job.builder.TransformerJobBuilder;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
-import org.eobjects.hadoopdatacleaner.mapreduce.FlatFileMapper;
-import org.eobjects.hadoopdatacleaner.mapreduce.FlatFileReducer;
+import org.eobjects.hadoopdatacleaner.mapreduce.flatfile.FlatFileMapper;
+import org.eobjects.hadoopdatacleaner.mapreduce.flatfile.FlatFileReducer;
 import org.eobjects.metamodel.csv.CsvConfiguration;
 import org.eobjects.metamodel.util.FileResource;
 
 public final class FlatFileTool extends Configured implements Tool {
 
 	public final static String ANALYSIS_JOB_XML_KEY = "analysis.job.xml";
-	public final static String ANALYZER_BEANS_CONFIGURATION_DATASTORES_CSV_KEY = "analyzer.beans.configuration.datastores.csv.key";
+	public final static String ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY = "analyzer.beans.configuration.datastores.key";
 
 	private String analysisJobXml;
 
-	private String analyzerBeansConfigurationDatastoresCsv;
+	private String analyzerBeansConfigurationDatastores;
 
 	public FlatFileTool(
 			AnalyzerBeansConfiguration analyzerBeansConfiguration,
 			AnalysisJob analysisJob) throws FileNotFoundException {
 
-		this.analyzerBeansConfigurationDatastoresCsv = ConfigurationSerializer.serializeAnalyzerBeansConfigurationToCsv(analyzerBeansConfiguration);
+		this.analyzerBeansConfigurationDatastores = ConfigurationSerializer.serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfiguration);
 		this.analysisJobXml = ConfigurationSerializer.serializeAnalysisJobToXml(analyzerBeansConfiguration, analysisJob);
 	}
 
@@ -87,8 +87,8 @@ public final class FlatFileTool extends Configured implements Tool {
 
 		Configuration conf = getConf();
 		conf.set(ANALYSIS_JOB_XML_KEY, analysisJobXml);
-		conf.set(ANALYZER_BEANS_CONFIGURATION_DATASTORES_CSV_KEY,
-				analyzerBeansConfigurationDatastoresCsv);
+		conf.set(ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY,
+				analyzerBeansConfigurationDatastores);
 
 		return runMapReduceJob(analysisJobPath, output, conf);
 	}

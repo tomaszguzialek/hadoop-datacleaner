@@ -1,4 +1,4 @@
-package org.eobjects.hadoopdatacleaner.hbase.utils;
+package org.eobjects.hadoopdatacleaner.datastores.hbase.utils;
 
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.SplitKeyValue;

@@ -68,9 +68,9 @@ public class ConfigurationSerializerTest {
 	@Test
 	public void testSerializeDeserializeDatastores() {
 		String csv = ConfigurationSerializer
-				.serializeAnalyzerBeansConfigurationToCsv(analyzerBeansConfiguration);
+				.serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfiguration);
 		AnalyzerBeansConfiguration deserialized = ConfigurationSerializer
-				.deserializeDatastoresFromCsv(csv);
+				.deserializeAnalyzerBeansDatastores(csv);
 		for (String datastoreName : analyzerBeansConfiguration
 				.getDatastoreCatalog().getDatastoreNames()) {
 			Datastore datastore = analyzerBeansConfiguration

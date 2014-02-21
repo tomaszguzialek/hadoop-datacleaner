@@ -1,4 +1,4 @@
-package org.eobjects.hadoopdatacleaner.mapreduce;
+package org.eobjects.hadoopdatacleaner.mapreduce.flatfile;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,9 +55,9 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
 
         Configuration mapReduceConfiguration = context.getConfiguration();
         String datastoresCsvLines = mapReduceConfiguration
-                .get(FlatFileTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_CSV_KEY);
+                .get(FlatFileTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY);
         String analysisJobXml = mapReduceConfiguration.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
-        analyzerBeansConfiguration = ConfigurationSerializer.deserializeDatastoresFromCsv(datastoresCsvLines);
+        analyzerBeansConfiguration = ConfigurationSerializer.deserializeAnalyzerBeansDatastores(datastoresCsvLines);
         analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
 
         csvParser.parseHeaderRow(csvLine, analysisJob);

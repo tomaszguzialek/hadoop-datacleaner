@@ -32,12 +32,12 @@ import org.eobjects.metamodel.util.SimpleTableDef;
 
 public class ConfigurationSerializer {
 
-	public static AnalyzerBeansConfiguration deserializeDatastoresFromCsv(
-			String datastoresCsvLines) {
+	public static AnalyzerBeansConfiguration deserializeAnalyzerBeansDatastores(
+			String datastoresInput) {
 
 		List<Datastore> datastores = new ArrayList<Datastore>();
 
-		String[] datastoreLines = datastoresCsvLines.split("\n");
+		String[] datastoreLines = datastoresInput.split("\n");
 		for (String datastoreLine : datastoreLines) {
 			String[] items = datastoreLine.split(",");
 			String datastoreName = items[0];
@@ -85,10 +85,10 @@ public class ConfigurationSerializer {
 				.getBytes()));
 	}
 
-	public static String serializeAnalyzerBeansConfigurationToCsv(
+	public static String serializeAnalyzerBeansConfigurationDataStores(
 			AnalyzerBeansConfiguration analyzerBeansConfiguration) {
 
-		StringBuilder datastoresCsvBuilder = new StringBuilder();
+		StringBuilder datastoresOutputBuilder = new StringBuilder();
 
 		DatastoreCatalog datastoreCatalog = analyzerBeansConfiguration
 				.getDatastoreCatalog();
@@ -99,19 +99,19 @@ public class ConfigurationSerializer {
 				Schema schema = datastore.openConnection().getDataContext()
 						.getDefaultSchema();
 				for (Table table : schema.getTables()) {
-					datastoresCsvBuilder.append(datastoreName);
-					datastoresCsvBuilder.append(",");
-					datastoresCsvBuilder.append(schema.getName());
-					datastoresCsvBuilder.append(",");
-					datastoresCsvBuilder.append(table.getName());
-					datastoresCsvBuilder.append(",");
+					datastoresOutputBuilder.append(datastoreName);
+					datastoresOutputBuilder.append(",");
+					datastoresOutputBuilder.append(schema.getName());
+					datastoresOutputBuilder.append(",");
+					datastoresOutputBuilder.append(table.getName());
+					datastoresOutputBuilder.append(",");
 					String[] columnNames = table.getColumnNames();
 					for (int i = 0; i < columnNames.length; i++) {
-						datastoresCsvBuilder.append(columnNames[i]);
+						datastoresOutputBuilder.append(columnNames[i]);
 						if (i == columnNames.length - 1)
-							datastoresCsvBuilder.append("\n");
+							datastoresOutputBuilder.append("\n");
 						else
-							datastoresCsvBuilder.append(",");
+							datastoresOutputBuilder.append(",");
 					}
 				}
 			} else {
@@ -119,19 +119,19 @@ public class ConfigurationSerializer {
 						.getSchemaNavigator();
 				for (Schema schema : schemaNavigator.getSchemas()) {
 					for (Table table : schema.getTables()) {
-						datastoresCsvBuilder.append(datastoreName);
-						datastoresCsvBuilder.append(",");
-						datastoresCsvBuilder.append(schema.getName());
-						datastoresCsvBuilder.append(",");
-						datastoresCsvBuilder.append(table.getName());
-						datastoresCsvBuilder.append(",");
+						datastoresOutputBuilder.append(datastoreName);
+						datastoresOutputBuilder.append(",");
+						datastoresOutputBuilder.append(schema.getName());
+						datastoresOutputBuilder.append(",");
+						datastoresOutputBuilder.append(table.getName());
+						datastoresOutputBuilder.append(",");
 						String[] columnNames = table.getColumnNames();
 						for (int i = 0; i < columnNames.length; i++) {
-							datastoresCsvBuilder.append(columnNames[i]);
+							datastoresOutputBuilder.append(columnNames[i]);
 							if (i == columnNames.length - 1)
-								datastoresCsvBuilder.append("\n");
+								datastoresOutputBuilder.append("\n");
 							else
-								datastoresCsvBuilder.append(",");
+								datastoresOutputBuilder.append(",");
 						}
 					}
 				}
@@ -139,7 +139,7 @@ public class ConfigurationSerializer {
 			}
 		}
 
-		return datastoresCsvBuilder.toString();
+		return datastoresOutputBuilder.toString();
 	}
 	
 	public static String serializeAnalysisJobToXml(

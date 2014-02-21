@@ -1,4 +1,4 @@
-package org.eobjects.hadoopdatacleaner.mapreduce;
+package org.eobjects.hadoopdatacleaner.mapreduce.flatfile;
 
 import java.io.IOException;
 import java.util.Iterator;
