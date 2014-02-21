@@ -31,16 +31,16 @@ import org.eobjects.analyzer.job.runner.RowProcessingPublishers;
 import org.eobjects.analyzer.job.tasks.Task;
 import org.eobjects.analyzer.lifecycle.LifeCycleHelper;
 import org.eobjects.analyzer.util.SourceColumnFinder;
-import org.eobjects.hadoopdatacleaner.HadoopDataCleanerTool;
+import org.eobjects.hadoopdatacleaner.FlatFileTool;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.datastores.CsvParser;
 import org.eobjects.hadoopdatacleaner.job.tasks.ConsumeRowTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWritable, SortedMapWritable> {
+public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, SortedMapWritable> {
 
-    private static final Logger logger = LoggerFactory.getLogger(HadoopDataCleanerMapper.class);
+    private static final Logger logger = LoggerFactory.getLogger(FlatFileMapper.class);
 
     private AnalyzerBeansConfiguration analyzerBeansConfiguration;
 
@@ -55,13 +55,15 @@ public class HadoopDataCleanerMapper extends Mapper<LongWritable, Text, LongWrit
 
         Configuration mapReduceConfiguration = context.getConfiguration();
         String datastoresCsvLines = mapReduceConfiguration
-                .get(HadoopDataCleanerTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_CSV_KEY);
-        String analysisJobXml = mapReduceConfiguration.get(HadoopDataCleanerTool.ANALYSIS_JOB_XML_KEY);
+                .get(FlatFileTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_CSV_KEY);
+        String analysisJobXml = mapReduceConfiguration.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
         analyzerBeansConfiguration = ConfigurationSerializer.deserializeDatastoresFromCsv(datastoresCsvLines);
         analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
 
         csvParser.parseHeaderRow(csvLine, analysisJob);
         InputRow inputRow = csvParser.prepareRow(csvLine);
+        
+        
 
         RowProcessingPublisher publisher = prepareRowProcessingPublisher();
         List<RowProcessingConsumer> consumers = prepareConsumers(publisher);

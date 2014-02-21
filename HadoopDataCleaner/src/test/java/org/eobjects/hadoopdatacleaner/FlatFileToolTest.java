@@ -23,22 +23,22 @@ import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.analyzer.job.builder.AnalysisJobBuilder;
 import org.eobjects.analyzer.job.builder.AnalyzerJobBuilder;
 import org.eobjects.analyzer.job.builder.TransformerJobBuilder;
-import org.eobjects.hadoopdatacleaner.HadoopDataCleanerTool;
+import org.eobjects.hadoopdatacleaner.FlatFileTool;
 import org.eobjects.metamodel.csv.CsvConfiguration;
 import org.eobjects.metamodel.util.FileResource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class HadoopDataCleanerToolTest {
+public class FlatFileToolTest {
 
-	HadoopDataCleanerTool publisher;
+	FlatFileTool publisher;
 
 	@Before
 	public void setUp() throws FileNotFoundException {
 		AnalyzerBeansConfiguration analyzerBeansConfiguration = buildAnalyzerBeansConfiguration();
 		AnalysisJob analysisJob = buildAnalysisJob(analyzerBeansConfiguration);
-		publisher = new HadoopDataCleanerTool(
+		publisher = new FlatFileTool(
 				analyzerBeansConfiguration, analysisJob);
 	}
 
@@ -73,7 +73,7 @@ public class HadoopDataCleanerToolTest {
 				.replace(descriptorProvider);
 	}
 
-	private static AnalysisJob buildAnalysisJob(
+	public static AnalysisJob buildAnalysisJob(
 			AnalyzerBeansConfiguration configuration) {
 		AnalysisJobBuilder ajb = new AnalysisJobBuilder(configuration);
 		try {

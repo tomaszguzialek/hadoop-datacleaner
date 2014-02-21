@@ -11,7 +11,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Reducer;
 
-public class HadoopDataCleanerReducer extends Reducer<LongWritable, SortedMapWritable, LongWritable, Text> {
+public class FlatFileReducer extends Reducer<LongWritable, SortedMapWritable, LongWritable, Text> {
 
     @Override
     public void reduce(LongWritable key, Iterable<SortedMapWritable> rows, Context context) throws IOException,
