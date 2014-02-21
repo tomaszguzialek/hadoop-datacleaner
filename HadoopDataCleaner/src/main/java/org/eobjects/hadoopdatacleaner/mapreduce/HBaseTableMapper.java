@@ -2,35 +2,22 @@ package org.eobjects.hadoopdatacleaner.mapreduce;
 
 import java.io.IOException;
 
-import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.KeyValue.SplitKeyValue;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.io.Text;
+import org.eobjects.hadoopdatacleaner.hbase.utils.ResultUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class HBaseTableMapper extends TableMapper</*KEYIN*/ImmutableBytesWritable, /*KEYOUT*/ Result> {
+public class HBaseTableMapper extends TableMapper</* KEYIN */ImmutableBytesWritable, /* KEYOUT */Result> {
 
-    private Text text = new Text();
+    private static final Logger logger = LoggerFactory.getLogger(HBaseTableMapper.class);
 
-    public void map(/*KEYOUT*/ ImmutableBytesWritable row, /*KEYOUT*/ Result value, Context context) throws InterruptedException, IOException {
-        KeyValue[] keyValues = value.raw();
+    public void map(/* KEYOUT */ImmutableBytesWritable row, /* KEYOUT */Result result, Context context)
+            throws InterruptedException, IOException {
 
-        for (int i = 0; i < keyValues.length; i++) {
-            SplitKeyValue splitKeyValue = keyValues[i].split();
-            // String val = new String(value.getValue(splitKeyValue.getFamily(),
-            // splitKeyValue.getQualifier()));
-            System.out.println("Family – " + Bytes.toString(splitKeyValue.getFamily()));
-            System.out.println("Qualifier – " + Bytes.toString(splitKeyValue.getQualifier()));
-            System.out.println("Key: " + Bytes.toString(splitKeyValue.getRow()) + ", Value: "
-                    + Bytes.toString(splitKeyValue.getValue()));
-
-            text.set(Bytes.toString(splitKeyValue.getRow()) + "|" + Bytes.toString(splitKeyValue.getValue()) + "|"
-                    + Bytes.toString(splitKeyValue.getFamily()) + "|" + Bytes.toString(splitKeyValue.getQualifier()));
-            
-            context.write(row, value);
-        }
+        ResultUtils.printResult(result, logger);
+        context.write(row, result);
     }
 
 }

@@ -7,23 +7,23 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableReducer;
+import org.eobjects.hadoopdatacleaner.hbase.utils.ResultUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HBaseTableReducer extends
-        TableReducer</* KEYIN */ImmutableBytesWritable, /* VALUEIN */ Result, /* VALUEOUT */KeyValue> {
-    public static final byte[] COLUMN_FAMILY = "mainFamily".getBytes();
-    public static final byte[] COUNTRY_NAME = "country_name".getBytes();
-    public static final byte[] ISO2 = "iso2".getBytes();
-    public static final byte[] ISO3 = "iso3".getBytes();
+        TableReducer</* KEYIN */ImmutableBytesWritable, /* VALUEIN */Result, /* VALUEOUT */KeyValue> {
 
-    public void reduce(ImmutableBytesWritable rowKey, Iterable<Result> results, Context context)
-            throws IOException, InterruptedException {
-        
+    private static final Logger logger = LoggerFactory.getLogger(HBaseTableReducer.class);
+
+    public void reduce(ImmutableBytesWritable rowKey, Iterable<Result> results, Context context) throws IOException,
+            InterruptedException {
+
         for (Result result : results) {
-            Put put = new Put(result.getValue(COLUMN_FAMILY, COUNTRY_NAME));
-            put.add(COLUMN_FAMILY, COUNTRY_NAME, result.getValue(COLUMN_FAMILY, COUNTRY_NAME));
-            put.add(COLUMN_FAMILY, ISO2, result.getValue(COLUMN_FAMILY, ISO2));
-            put.add(COLUMN_FAMILY, ISO3, result.getValue(COLUMN_FAMILY, ISO3));
+            ResultUtils.printResult(result, logger);
+            Put put = ResultUtils.preparePut(result);
             context.write(null, put);
         }
     }
+
 }
