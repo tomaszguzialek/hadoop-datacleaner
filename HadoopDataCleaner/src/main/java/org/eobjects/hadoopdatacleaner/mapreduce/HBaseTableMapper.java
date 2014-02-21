@@ -10,11 +10,11 @@ import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Text;
 
-public class HBaseTableMapper extends TableMapper<Text, Text> {
+public class HBaseTableMapper extends TableMapper</*KEYIN*/ImmutableBytesWritable, /*KEYOUT*/ Result> {
 
     private Text text = new Text();
 
-    public void map(ImmutableBytesWritable row, Result value, Context context) throws InterruptedException, IOException {
+    public void map(/*KEYOUT*/ ImmutableBytesWritable row, /*KEYOUT*/ Result value, Context context) throws InterruptedException, IOException {
         KeyValue[] keyValues = value.raw();
 
         for (int i = 0; i < keyValues.length; i++) {
@@ -28,6 +28,8 @@ public class HBaseTableMapper extends TableMapper<Text, Text> {
 
             text.set(Bytes.toString(splitKeyValue.getRow()) + "|" + Bytes.toString(splitKeyValue.getValue()) + "|"
                     + Bytes.toString(splitKeyValue.getFamily()) + "|" + Bytes.toString(splitKeyValue.getQualifier()));
+            
+            context.write(row, value);
         }
     }
 

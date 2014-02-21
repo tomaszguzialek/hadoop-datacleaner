@@ -44,7 +44,7 @@ public class HBaseToolTest {
 	public void test() throws Exception {
 		String[] args = new String[2];
 		args[0] = "countrycodes";
-		args[1] = "output";
+		args[1] = "countrycodes_output";
 		int exitCode = ToolRunner.run(hBaseTool, args);
 		Assert.assertEquals(0, exitCode);
 	}

@@ -24,13 +24,15 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.eobjects.hadoopdatacleaner.mapreduce.HBaseTableMapper;
+import org.eobjects.hadoopdatacleaner.mapreduce.HBaseTableReducer;
 
 public final class HBaseTool extends Configured implements Tool {
 
@@ -42,7 +44,7 @@ public final class HBaseTool extends Configured implements Tool {
 			outputTableName = args[1];
 		} else {
 			System.err
-					.println("Incorrect number of arguments.  Expected: <inputTableName> output");
+					.println("Incorrect number of arguments.  Expected: <inputTableName> <outputTableName>");
 			return -1;
 		}
 
@@ -64,14 +66,17 @@ public final class HBaseTool extends Configured implements Tool {
         scan.setCacheBlocks(false);  // don't set to true for MR jobs
 		
 		TableMapReduceUtil.initTableMapperJob(
-                inputTableName,         // input HBase table name
-                scan,                   // Scan instance to control CF and attribute selection
-                HBaseTableMapper.class, // mapper
-                null,                   // mapper output key
-                null,                   // mapper output value
+                inputTableName,                     // input HBase table name
+                scan,                               // Scan instance to control CF and attribute selection
+                HBaseTableMapper.class,             // mapper
+                ImmutableBytesWritable.class,       // mapper output key
+                Result.class,                       // mapper output value
                 job);
 		
-		job.setOutputFormatClass(NullOutputFormat.class);
+		TableMapReduceUtil.initTableReducerJob(
+		        outputTableName,         // output HBase table name
+		        HBaseTableReducer.class, // reducer class 
+		        job);
 		
 		boolean success = job.waitForCompletion(true);
 		return success ? 0 : 1;
