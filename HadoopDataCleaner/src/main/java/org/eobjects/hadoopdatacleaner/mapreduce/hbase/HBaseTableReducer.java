@@ -1,4 +1,4 @@
-package org.eobjects.hadoopdatacleaner.mapreduce;
+package org.eobjects.hadoopdatacleaner.mapreduce.hbase;
 
 import java.io.IOException;
 
@@ -7,7 +7,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableReducer;
-import org.eobjects.hadoopdatacleaner.hbase.utils.ResultUtils;
+import org.eobjects.hadoopdatacleaner.datastores.hbase.utils.ResultUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
