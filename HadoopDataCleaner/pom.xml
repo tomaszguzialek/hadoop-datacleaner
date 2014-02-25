@@ -8,11 +8,12 @@
 	<packaging>jar</packaging>
 
 	<name>HadoopDataCleaner</name>
-	<url>http://maven.apache.org</url>
+	<url>http://github.com/datacleaner/hadoop-datacleaner</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<hadoop.version>2.0.0-cdh4.5.0</hadoop.version>
+		<analyzerbeans.version>0.37</analyzerbeans.version>
 	</properties>
 
 	<repositories>
@@ -33,6 +34,7 @@
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-client</artifactId>
 			<version>${hadoop.version}</version>
+
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hbase</groupId>
@@ -58,7 +60,7 @@
 		<dependency>
 			<groupId>org.eobjects.analyzerbeans</groupId>
 			<artifactId>AnalyzerBeans-core</artifactId>
-			<version>0.37</version>
+			<version>${analyzerbeans.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.eobjects.analyzerbeans</groupId>
@@ -68,22 +70,22 @@
 		<dependency>
 			<groupId>org.eobjects.analyzerbeans</groupId>
 			<artifactId>AnalyzerBeans-basic-transformers</artifactId>
-			<version>0.37</version>
+			<version>${analyzerbeans.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.eobjects.analyzerbeans</groupId>
 			<artifactId>AnalyzerBeans-basic-analyzers</artifactId>
-			<version>0.37</version>
+			<version>${analyzerbeans.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.eobjects.analyzerbeans</groupId>
 			<artifactId>AnalyzerBeans-writers</artifactId>
-			<version>0.37</version>
+			<version>${analyzerbeans.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.eobjects.analyzerbeans</groupId>
 			<artifactId>AnalyzerBeans-value-distribution</artifactId>
-			<version>0.37</version>
+			<version>${analyzerbeans.version}</version>
 		</dependency>
 	</dependencies>
 	<build>
