@@ -32,13 +32,13 @@ import org.junit.Test;
 
 public class FlatFileToolTest {
 
-	FlatFileTool publisher;
+	FlatFileTool flatFileTool;
 
 	@Before
 	public void setUp() throws FileNotFoundException {
 		AnalyzerBeansConfiguration analyzerBeansConfiguration = buildAnalyzerBeansConfiguration();
 		AnalysisJob analysisJob = buildAnalysisJob(analyzerBeansConfiguration);
-		publisher = new FlatFileTool(
+		flatFileTool = new FlatFileTool(
 				analyzerBeansConfiguration, analysisJob);
 	}
 
@@ -47,7 +47,7 @@ public class FlatFileToolTest {
 		String[] args = new String[2];
 		args[0] = "/home/cloudera/datacleaner_examples/countrycodes.csv";
 		args[1] = "output";
-		int exitCode = ToolRunner.run(publisher, args);
+		int exitCode = ToolRunner.run(flatFileTool, args);
 		Assert.assertEquals(0, exitCode);
 	}
 

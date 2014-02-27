@@ -129,11 +129,11 @@ public final class HBaseTool extends Configured implements Tool {
     
     public static AnalyzerBeansConfiguration buildAnalyzerBeansConfiguration() {
         List<TableDataProvider<?>> tableDataProviders = new ArrayList<TableDataProvider<?>>();
-        SimpleTableDef tableDef1 = new SimpleTableDef("countrycodes", new String[] {"mainFamily:column_name", "mainFamily:iso2", "mainFamily:iso3"});
-        SimpleTableDef tableDef2 = new SimpleTableDef("countrycodes_output", new String[] {"mainFamily:column_name", "mainFamily:iso2", "mainFamily:iso3"});
+        SimpleTableDef tableDef1 = new SimpleTableDef("countrycodes", new String[] {"mainFamily:country_name", "mainFamily:iso2", "mainFamily:iso3"});
+        SimpleTableDef tableDef2 = new SimpleTableDef("countrycodes_output", new String[] {"mainFamily:country_name", "mainFamily:iso2", "mainFamily:iso3"});
         tableDataProviders.add(new ArrayTableDataProvider(tableDef1, new ArrayList<Object[]>()));
         tableDataProviders.add(new ArrayTableDataProvider(tableDef2, new ArrayList<Object[]>()));
-        Datastore datastore = new PojoDatastore("countrycodes_hbase", "countrycodes", tableDataProviders);
+        Datastore datastore = new PojoDatastore("countrycodes_hbase", "countrycodes_schema", tableDataProviders);
         
         DatastoreCatalog datastoreCatalog = new DatastoreCatalogImpl(datastore);
 
@@ -157,9 +157,10 @@ public final class HBaseTool extends Configured implements Tool {
         AnalysisJobBuilder ajb = new AnalysisJobBuilder(configuration);
         try {
             ajb.setDatastore("countrycodes_hbase");
-            ajb.addSourceColumns("mainFamily:country_name",
-                    "mainFamily:iso2",
-                    "mainFamily:iso2");
+            
+            ajb.addSourceColumns("countrycodes.mainFamily:country_name",
+                    "countrycodes.mainFamily:iso2",
+                    "countrycodes.mainFamily:iso3");
 
             TransformerJobBuilder<ConcatenatorTransformer> concatenator = ajb
                     .addTransformer(ConcatenatorTransformer.class);

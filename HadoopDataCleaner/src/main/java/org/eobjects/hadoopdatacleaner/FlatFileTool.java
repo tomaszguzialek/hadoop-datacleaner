@@ -75,13 +75,13 @@ public final class FlatFileTool extends Configured implements Tool {
 
 	@Override
 	public int run(String[] args) throws Exception {
-		String analysisJobPath, output;
+		String input, output;
 		if (args.length == 2) {
-			analysisJobPath = args[0];
+			input = args[0];
 			output = args[1];
 		} else {
 			System.err
-					.println("Incorrect number of arguments.  Expected: <path_to_analysis_xml_file> output");
+					.println("Incorrect number of arguments.  Expected: <input> output");
 			return -1;
 		}
 
@@ -90,13 +90,13 @@ public final class FlatFileTool extends Configured implements Tool {
 		conf.set(ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY,
 				analyzerBeansConfigurationDatastores);
 
-		return runMapReduceJob(analysisJobPath, output, conf);
+		return runMapReduceJob(input, output, conf);
 	}
 
 	private int runMapReduceJob(String analysisJobPath, String output,
 			Configuration mapReduceConfiguration) throws IOException,
 			InterruptedException, ClassNotFoundException {
-
+	    
 		Job job = Job.getInstance(mapReduceConfiguration);
 		job.setJarByClass(FlatFileMapper.class);
 		job.setJobName(this.getClass().getName());
@@ -109,7 +109,9 @@ public final class FlatFileTool extends Configured implements Tool {
 
 		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(SortedMapWritable.class);
-
+		
+		job.setNumReduceTasks(2);
+		
 		FileSystem hdfs = FileSystem.get(mapReduceConfiguration);
 		if (hdfs.exists(new Path(output)))
 			hdfs.delete(new Path(output), true);
