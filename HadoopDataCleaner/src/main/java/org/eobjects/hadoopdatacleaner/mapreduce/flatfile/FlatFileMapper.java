@@ -47,23 +47,23 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
     private AnalysisJob analysisJob;
 
     private AnalysisListener analysisListener = prepareAnalysisListener();
-    
+
     private CsvParser csvParser = new CsvParser();
+
+    protected void setup(Mapper<LongWritable, Text, LongWritable, SortedMapWritable>.Context context)
+            throws IOException, InterruptedException {
+        Configuration mapReduceConfiguration = context.getConfiguration();
+        String datastoresConfigurationLines = mapReduceConfiguration
+                .get(FlatFileTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY);
+        String analysisJobXml = mapReduceConfiguration.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
+        analyzerBeansConfiguration = ConfigurationSerializer.deserializeAnalyzerBeansDatastores(datastoresConfigurationLines);
+        analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
+    }
 
     @Override
     public void map(LongWritable key, Text csvLine, Context context) throws IOException, InterruptedException {
-
-        Configuration mapReduceConfiguration = context.getConfiguration();
-        String datastoresCsvLines = mapReduceConfiguration
-                .get(FlatFileTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY);
-        String analysisJobXml = mapReduceConfiguration.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
-        analyzerBeansConfiguration = ConfigurationSerializer.deserializeAnalyzerBeansDatastores(datastoresCsvLines);
-        analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
-
         csvParser.parseHeaderRow(csvLine, analysisJob);
         InputRow inputRow = csvParser.prepareRow(csvLine);
-        
-        
 
         RowProcessingPublisher publisher = prepareRowProcessingPublisher();
         List<RowProcessingConsumer> consumers = prepareConsumers(publisher);
@@ -75,7 +75,7 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
             Object value = transformedRow.getValue(inputColumn);
             logger.info("\t" + inputColumn.getName() + ": " + value);
         }
-        
+
         SortedMapWritable rowWritable = new SortedMapWritable();
         for (InputColumn<?> inputColumn : transformedRow.getInputColumns()) {
             String columnName = inputColumn.getName();
@@ -90,7 +90,7 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
         // clean up
         publisher.closeConsumers();
 
-         context.write(key, rowWritable);
+        context.write(key, rowWritable);
     }
 
     private List<RowProcessingConsumer> prepareConsumers(RowProcessingPublisher publisher) {
@@ -136,12 +136,10 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
         OutcomeSink outcomes = new OutcomeSinkImpl();
         ConsumeRowTask task = new ConsumeRowTask(consumers, 0, publisher.getRowProcessingMetrics(), row,
                 analysisListener, outcomes);
-        
+
         task.execute();
         return task.getCurrentRow();
     }
-
-    
 
     private RowProcessingPublisher prepareRowProcessingPublisher() {
         InjectionManager injectionManager = analyzerBeansConfiguration.getInjectionManager(analysisJob);
@@ -165,7 +163,7 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
 
     private AnalysisListener prepareAnalysisListener() {
         return new InfoLoggingAnalysisListener() {
-            
+
             @Override
             public void errorInTransformer(AnalysisJob job, TransformerJob transformerJob, InputRow row,
                     Throwable throwable) {
@@ -176,7 +174,7 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
             public void errorUknown(AnalysisJob job, Throwable throwable) {
                 throwable.printStackTrace();
             }
-             
+
             @Override
             public void jobSuccess(AnalysisJob job, AnalysisJobMetrics metrics) {
                 logger.info("Job finished successfully.");
