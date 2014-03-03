@@ -23,7 +23,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -35,26 +34,17 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.job.AnalysisJob;
-import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.configuration.sample.SampleCsvConfiguration;
 import org.eobjects.hadoopdatacleaner.mapreduce.flatfile.FlatFileMapper;
 import org.eobjects.hadoopdatacleaner.mapreduce.flatfile.FlatFileReducer;
 
-public final class FlatFileTool extends Configured implements Tool {
-
-	public final static String ANALYSIS_JOB_XML_KEY = "analysis.job.xml";
-	public final static String ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY = "analyzer.beans.configuration.datastores.key";
-
-	private String analysisJobXml;
-
-	private String analyzerBeansConfigurationDatastores;
+public final class FlatFileTool extends HadoopDataCleanerTool implements Tool {
 
 	public FlatFileTool(
 			AnalyzerBeansConfiguration analyzerBeansConfiguration,
 			AnalysisJob analysisJob) throws FileNotFoundException {
 
-		this.analyzerBeansConfigurationDatastores = ConfigurationSerializer.serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfiguration);
-		this.analysisJobXml = ConfigurationSerializer.serializeAnalysisJobToXml(analyzerBeansConfiguration, analysisJob);
+	    super(analyzerBeansConfiguration, analysisJob);
 	}
 
 	@Override
