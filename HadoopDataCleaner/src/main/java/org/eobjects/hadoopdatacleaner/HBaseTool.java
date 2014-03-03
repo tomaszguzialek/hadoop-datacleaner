@@ -20,8 +20,6 @@
 package org.eobjects.hadoopdatacleaner;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -33,30 +31,12 @@ import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.eobjects.analyzer.beans.StringAnalyzer;
-import org.eobjects.analyzer.beans.transform.ConcatenatorTransformer;
-import org.eobjects.analyzer.beans.transform.TokenizerTransformer;
-import org.eobjects.analyzer.beans.valuedist.ValueDistributionAnalyzer;
-import org.eobjects.analyzer.beans.writers.InsertIntoTableAnalyzer;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
-import org.eobjects.analyzer.configuration.AnalyzerBeansConfigurationImpl;
-import org.eobjects.analyzer.connection.Datastore;
-import org.eobjects.analyzer.connection.DatastoreCatalog;
-import org.eobjects.analyzer.connection.DatastoreCatalogImpl;
-import org.eobjects.analyzer.connection.PojoDatastore;
-import org.eobjects.analyzer.descriptors.Descriptors;
-import org.eobjects.analyzer.descriptors.SimpleDescriptorProvider;
 import org.eobjects.analyzer.job.AnalysisJob;
-import org.eobjects.analyzer.job.builder.AnalysisJobBuilder;
-import org.eobjects.analyzer.job.builder.AnalyzerJobBuilder;
-import org.eobjects.analyzer.job.builder.TransformerJobBuilder;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.configuration.sample.SampleHBaseConfiguration;
 import org.eobjects.hadoopdatacleaner.mapreduce.hbase.HBaseTableMapper;
 import org.eobjects.hadoopdatacleaner.mapreduce.hbase.HBaseTableReducer;
-import org.eobjects.metamodel.pojo.ArrayTableDataProvider;
-import org.eobjects.metamodel.pojo.TableDataProvider;
-import org.eobjects.metamodel.util.SimpleTableDef;
 
 public final class HBaseTool extends Configured implements Tool {
 
