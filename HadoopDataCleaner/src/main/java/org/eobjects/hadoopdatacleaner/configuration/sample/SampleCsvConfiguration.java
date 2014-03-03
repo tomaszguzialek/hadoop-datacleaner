@@ -22,9 +22,13 @@ import org.eobjects.metamodel.util.FileResource;
 
 public class SampleCsvConfiguration {
 
+    private static String _csvFilePath;
+    
     public static AnalyzerBeansConfiguration buildAnalyzerBeansConfiguration(String csvFilePath) {
+        _csvFilePath = csvFilePath;
+        
         CsvConfiguration csvConfiguration = new CsvConfiguration(1, "UTF8", ';', '"', '\\');
-        Datastore datastore = new CsvDatastore("Country codes",
+        Datastore datastore = new CsvDatastore(csvFilePath,
                 new FileResource(csvFilePath), csvConfiguration);
         
         DatastoreCatalog datastoreCatalog = new DatastoreCatalogImpl(datastore);
@@ -48,7 +52,7 @@ public class SampleCsvConfiguration {
             AnalyzerBeansConfiguration configuration) {
         AnalysisJobBuilder ajb = new AnalysisJobBuilder(configuration);
         try {
-            ajb.setDatastore("Country codes");
+            ajb.setDatastore(_csvFilePath);
             ajb.addSourceColumns("countrycodes.csv.countrycodes.Country name",
                     "countrycodes.csv.countrycodes.ISO 3166-2",
                     "countrycodes.csv.countrycodes.ISO 3166-3",
