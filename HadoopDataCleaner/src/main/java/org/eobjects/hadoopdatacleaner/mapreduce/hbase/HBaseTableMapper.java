@@ -57,23 +57,13 @@ public class HBaseTableMapper extends TableMapper</* KEYOUT */ImmutableBytesWrit
         List<InputRow> transformedRows = consumeRowHandler.consume(inputRow);
 
         for (InputRow transformedRow : transformedRows) {
-            logger.info("Transformed row: ");
-            for (InputColumn<?> inputColumn : transformedRow.getInputColumns()) {
-                Object value = transformedRow.getValue(inputColumn);
-                logger.info("\t" + inputColumn.getName() + ": " + value);
-            }
-
             SortedMapWritable rowWritable = new SortedMapWritable();
             for (InputColumn<?> inputColumn : transformedRow.getInputColumns()) {
                 String columnName = inputColumn.getName();
                 Object value = transformedRow.getValue(inputColumn);
-                System.out.println(columnName);
-                if (value == null)
-                    System.out.println(columnName);
-                System.out.println(value.toString());
                 rowWritable.put(new Text(columnName), new Text(value.toString()));
-                context.write(AnalyzerGroupKeys.STRING_ANALYZER.getWritableKey(), result);
             }
+            context.write(AnalyzerGroupKeys.STRING_ANALYZER.getWritableKey(), result);
         }
 
         ResultUtils.printResult(result, logger);
