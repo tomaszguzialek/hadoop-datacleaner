@@ -23,10 +23,10 @@ import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
+import org.apache.hadoop.io.SortedMapWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
@@ -76,8 +76,8 @@ public final class HBaseTool extends HadoopDataCleanerTool implements Tool {
                                                               // table name
                 scan, // Scan instance to control CF and attribute selection
                 HBaseTableMapper.class, // mapper
-                ImmutableBytesWritable.class, // mapper output key
-                Result.class, // mapper output value
+                Text.class, // mapper output key
+                SortedMapWritable.class, // mapper output value
                 job);
 
         TableMapReduceUtil.initTableReducerJob(outputTableName, // output HBase

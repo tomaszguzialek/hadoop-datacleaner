@@ -13,7 +13,9 @@ import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.data.InputColumn;
 import org.eobjects.analyzer.data.InputRow;
 import org.eobjects.analyzer.job.AnalysisJob;
+import org.eobjects.analyzer.job.AnalyzerJob;
 import org.eobjects.analyzer.job.runner.ConsumeRowHandler;
+import org.eobjects.analyzer.util.LabelUtils;
 import org.eobjects.hadoopdatacleaner.FlatFileTool;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.datastores.HBaseParser;
@@ -21,7 +23,7 @@ import org.eobjects.hadoopdatacleaner.datastores.hbase.utils.ResultUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HBaseTableMapper extends TableMapper</* KEYOUT */ImmutableBytesWritable, /* VALUEOUT */Result> {
+public class HBaseTableMapper extends TableMapper</* KEYOUT */Text, /* VALUEOUT */SortedMapWritable> {
 
     private static final Logger logger = LoggerFactory.getLogger(HBaseTableMapper.class);
 
@@ -33,7 +35,7 @@ public class HBaseTableMapper extends TableMapper</* KEYOUT */ImmutableBytesWrit
 
     @Override
     protected void setup(
-            org.apache.hadoop.mapreduce.Mapper</* KEYIN */ImmutableBytesWritable, /* VALUEIN */Result, /* KEYOUT */ImmutableBytesWritable, /* VALUEOUT */Result>.Context context)
+            org.apache.hadoop.mapreduce.Mapper</* KEYIN */ImmutableBytesWritable, /* VALUEIN */Result, /* KEYOUT */Text, /* VALUEOUT */SortedMapWritable>.Context context)
             throws IOException, InterruptedException {
         Configuration mapReduceConfiguration = context.getConfiguration();
         String datastoresConfigurationLines = mapReduceConfiguration
@@ -45,7 +47,7 @@ public class HBaseTableMapper extends TableMapper</* KEYOUT */ImmutableBytesWrit
         super.setup(context);
     }
 
-    public void map(/* KEYOUT */ImmutableBytesWritable row, /* VALUEOUT */Result result, Context context)
+    public void map(/* KEYIN */ImmutableBytesWritable row, /* VALUEIN */Result result, Context context)
             throws InterruptedException, IOException {
 
         InputRow inputRow = hbaseParser.prepareRow(result);
@@ -55,15 +57,23 @@ public class HBaseTableMapper extends TableMapper</* KEYOUT */ImmutableBytesWrit
         ConsumeRowHandler consumeRowHandler = new ConsumeRowHandler(analysisJob, analyzerBeansConfiguration,
                 configuration);
         List<InputRow> transformedRows = consumeRowHandler.consume(inputRow);
-
+        
         for (InputRow transformedRow : transformedRows) {
+            logger.info("Transformed row: ");
+            for (InputColumn<?> inputColumn : transformedRow.getInputColumns()) {
+                Object value = transformedRow.getValue(inputColumn);
+                logger.info("\t" + inputColumn.getName() + ": " + value);
+            }
+            
             SortedMapWritable rowWritable = new SortedMapWritable();
             for (InputColumn<?> inputColumn : transformedRow.getInputColumns()) {
                 String columnName = inputColumn.getName();
                 Object value = transformedRow.getValue(inputColumn);
                 rowWritable.put(new Text(columnName), new Text(value.toString()));
             }
-            context.write(AnalyzerGroupKeys.STRING_ANALYZER.getWritableKey(), result);
+            for (AnalyzerJob analyzerJob : analysisJob.getAnalyzerJobs()) {
+                context.write(new Text(LabelUtils.getLabel(analyzerJob)), rowWritable);
+            }
         }
 
         ResultUtils.printResult(result, logger);
