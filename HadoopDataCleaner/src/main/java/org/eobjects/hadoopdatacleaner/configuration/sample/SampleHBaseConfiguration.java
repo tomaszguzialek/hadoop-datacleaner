@@ -66,6 +66,7 @@ public class SampleHBaseConfiguration {
             concatenator.addInputColumns(ajb.getSourceColumnByName("mainFamily:iso2"));
             concatenator.addInputColumns(ajb.getSourceColumnByName("mainFamily:iso3"));
             concatenator.setConfiguredProperty("Separator", "_");
+            concatenator.getOutputColumns().get(0).setName("mainFamily:iso2_iso3");
             
 //          TransformerJobBuilder<TokenizerTransformer> tokenizer = ajb.addTransformer(TokenizerTransformer.class);
 //          tokenizer.setConfiguredProperty("Token target", TokenizerTransformer.TokenTarget.COLUMNS);

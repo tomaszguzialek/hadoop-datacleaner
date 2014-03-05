@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.mapreduce.TableReducer;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -41,8 +42,8 @@ public class HBaseTableReducer extends
             }
             Result result = new Result(keyValues);
             ResultUtils.printResult(result, logger);
-//            Put put = ResultUtils.preparePut(result);
-//            context.write(null, put);
+            Put put = ResultUtils.preparePut(result);
+            context.write(null, put);
         }
         logger.info("end of analyzerKey = " + analyzerKey.toString() + " rows.");
     }
