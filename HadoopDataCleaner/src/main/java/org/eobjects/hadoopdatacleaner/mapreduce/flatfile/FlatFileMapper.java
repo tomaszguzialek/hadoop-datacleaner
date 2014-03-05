@@ -37,6 +37,7 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
         String analysisJobXml = mapReduceConfiguration.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
         analyzerBeansConfiguration = ConfigurationSerializer.deserializeAnalyzerBeansDatastores(datastoresConfigurationLines);
         analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
+        super.setup(context);
     }
 
     @Override
@@ -60,10 +61,8 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
             for (InputColumn<?> inputColumn : transformedRow.getInputColumns()) {
                 String columnName = inputColumn.getName();
                 Object value = transformedRow.getValue(inputColumn);
-                System.out.println(columnName);
                 if (value == null)
                     System.out.println(columnName);
-                System.out.println(value.toString());
                 rowWritable.put(new Text(columnName), new Text(value.toString()));
                 context.write(key, rowWritable);
             }

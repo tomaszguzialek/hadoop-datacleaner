@@ -95,7 +95,7 @@ public final class FlatFileTool extends HadoopDataCleanerTool implements Tool {
 	}
 	
 	public static void main(String[] args) throws Exception {
-        AnalyzerBeansConfiguration analyzerBeansConfiguration = SampleCsvConfiguration.buildAnalyzerBeansConfiguration(args[0]);
+        AnalyzerBeansConfiguration analyzerBeansConfiguration = SampleCsvConfiguration.buildAnalyzerBeansConfigurationHdfs(args[0]);
         AnalysisJob analysisJob = SampleCsvConfiguration.buildAnalysisJob(analyzerBeansConfiguration);
         FlatFileTool hadoopDataCleanerTool = new FlatFileTool(analyzerBeansConfiguration, analysisJob);
         ToolRunner.run(hadoopDataCleanerTool, args);

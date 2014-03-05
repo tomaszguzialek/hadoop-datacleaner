@@ -18,7 +18,7 @@ public class FlatFileToolTest {
         args[0] = "/home/cloudera/datacleaner_examples/countrycodes.csv";
         args[1] = "output";
         AnalyzerBeansConfiguration analyzerBeansConfiguration = SampleCsvConfiguration
-                .buildAnalyzerBeansConfiguration(args[0]);
+                .buildAnalyzerBeansConfigurationLocal(args[0]);
         AnalysisJob analysisJob = SampleCsvConfiguration.buildAnalysisJob(analyzerBeansConfiguration);
         flatFileTool = new FlatFileTool(analyzerBeansConfiguration, analysisJob);
         int exitCode = ToolRunner.run(flatFileTool, args);

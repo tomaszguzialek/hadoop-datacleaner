@@ -1,5 +1,10 @@
 package org.eobjects.hadoopdatacleaner.configuration.sample;
 
+import java.net.URL;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FsUrlStreamHandlerFactory;
 import org.eobjects.analyzer.beans.StringAnalyzer;
 import org.eobjects.analyzer.beans.transform.ConcatenatorTransformer;
 import org.eobjects.analyzer.beans.transform.TokenizerTransformer;
@@ -19,12 +24,50 @@ import org.eobjects.analyzer.job.builder.AnalyzerJobBuilder;
 import org.eobjects.analyzer.job.builder.TransformerJobBuilder;
 import org.eobjects.metamodel.csv.CsvConfiguration;
 import org.eobjects.metamodel.util.FileResource;
+import org.eobjects.metamodel.util.UrlResource;
 
 public class SampleCsvConfiguration {
 
     private static String _csvFilePath;
+
+    static {
+        // java.lang.StackOverflow workaround
+        // http://stackoverflow.com/questions/17360018/getting-stack-overflow-error-in-hadoop
+        Configuration conf = new Configuration();
+        try {
+            FileSystem.getFileSystemClass("file", conf);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+        // The end of the workaround
+        URL.setURLStreamHandlerFactory(new FsUrlStreamHandlerFactory());
+    }
+
+    public static AnalyzerBeansConfiguration buildAnalyzerBeansConfigurationHdfs(String csvFilePath) {
+        _csvFilePath = csvFilePath;
+        
+        CsvConfiguration csvConfiguration = new CsvConfiguration(1, "UTF8", ';', '"', '\\');
+        Datastore datastore = new CsvDatastore(csvFilePath,
+                new UrlResource(csvFilePath), csvConfiguration);
+        
+        DatastoreCatalog datastoreCatalog = new DatastoreCatalogImpl(datastore);
+
+        SimpleDescriptorProvider descriptorProvider = new SimpleDescriptorProvider(
+                true);
+        descriptorProvider.addTransformerBeanDescriptor(Descriptors
+                .ofTransformer(ConcatenatorTransformer.class));
+        descriptorProvider.addTransformerBeanDescriptor(Descriptors
+                .ofTransformer(TokenizerTransformer.class));
+        descriptorProvider.addAnalyzerBeanDescriptor(Descriptors
+                .ofAnalyzer(InsertIntoTableAnalyzer.class));
+        descriptorProvider.addAnalyzerBeanDescriptor(Descriptors
+                .ofAnalyzer(StringAnalyzer.class));
+
+        return new AnalyzerBeansConfigurationImpl().replace(datastoreCatalog)
+                .replace(descriptorProvider);
+    }
     
-    public static AnalyzerBeansConfiguration buildAnalyzerBeansConfiguration(String csvFilePath) {
+    public static AnalyzerBeansConfiguration buildAnalyzerBeansConfigurationLocal(String csvFilePath) {
         _csvFilePath = csvFilePath;
         
         CsvConfiguration csvConfiguration = new CsvConfiguration(1, "UTF8", ';', '"', '\\');
@@ -48,14 +91,12 @@ public class SampleCsvConfiguration {
                 .replace(descriptorProvider);
     }
 
-    public static AnalysisJob buildAnalysisJob(
-            AnalyzerBeansConfiguration configuration) {
+    public static AnalysisJob buildAnalysisJob(AnalyzerBeansConfiguration configuration) {
         AnalysisJobBuilder ajb = new AnalysisJobBuilder(configuration);
         try {
             ajb.setDatastore(_csvFilePath);
             ajb.addSourceColumns("countrycodes.csv.countrycodes.Country name",
-                    "countrycodes.csv.countrycodes.ISO 3166-2",
-                    "countrycodes.csv.countrycodes.ISO 3166-3",
+                    "countrycodes.csv.countrycodes.ISO 3166-2", "countrycodes.csv.countrycodes.ISO 3166-3",
                     "countrycodes.csv.countrycodes.Synonym3");
 
             TransformerJobBuilder<ConcatenatorTransformer> concatenator = ajb
@@ -63,21 +104,31 @@ public class SampleCsvConfiguration {
             concatenator.addInputColumns(ajb.getSourceColumnByName("countrycodes.csv.countrycodes.ISO 3166-2"));
             concatenator.addInputColumns(ajb.getSourceColumnByName("countrycodes.csv.countrycodes.ISO 3166-3"));
             concatenator.setConfiguredProperty("Separator", "_");
+
+            // TransformerJobBuilder<TokenizerTransformer> tokenizer =
+            // ajb.addTransformer(TokenizerTransformer.class);
+            // tokenizer.setConfiguredProperty("Token target",
+            // TokenizerTransformer.TokenTarget.COLUMNS);
+            // tokenizer.addInputColumns(concatenator.getOutputColumns().get(0));
+            // tokenizer.setConfiguredProperty("Number of tokens", 2);
+            // tokenizer.setConfiguredProperty("Delimiters", new char[] { '_'
+            // });
+            // tokenizer.getOutputColumns().get(0).setName("tokenized");
+
+            AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer = ajb
+                    .addAnalyzer(ValueDistributionAnalyzer.class);
+            valueDistributionAnalyzer.addInputColumn(ajb
+                    .getSourceColumnByName("countrycodes.csv.countrycodes.Country name"));
             
-//          TransformerJobBuilder<TokenizerTransformer> tokenizer = ajb.addTransformer(TokenizerTransformer.class);
-//          tokenizer.setConfiguredProperty("Token target", TokenizerTransformer.TokenTarget.COLUMNS);
-//          tokenizer.addInputColumns(concatenator.getOutputColumns().get(0));
-//          tokenizer.setConfiguredProperty("Number of tokens", 2);
-//          tokenizer.setConfiguredProperty("Delimiters", new char[] { '_' });
-//          tokenizer.getOutputColumns().get(0).setName("tokenized");
-            
-            AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer = ajb.addAnalyzer(ValueDistributionAnalyzer.class);
-            valueDistributionAnalyzer.addInputColumn(ajb.getSourceColumnByName("countrycodes.csv.countrycodes.Country name"));
+            AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer2 = ajb
+                    .addAnalyzer(ValueDistributionAnalyzer.class);
+            valueDistributionAnalyzer2.addInputColumn(ajb
+                    .getSourceColumnByName("countrycodes.csv.countrycodes.ISO 3166-2"));
 
             return ajb.toAnalysisJob();
         } finally {
             ajb.close();
         }
     }
-    
+
 }

@@ -4,7 +4,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eobjects.analyzer.beans.StringAnalyzer;
 import org.eobjects.analyzer.beans.transform.ConcatenatorTransformer;
@@ -13,7 +15,6 @@ import org.eobjects.analyzer.beans.valuedist.ValueDistributionAnalyzer;
 import org.eobjects.analyzer.beans.writers.InsertIntoTableAnalyzer;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfigurationImpl;
-import org.eobjects.analyzer.connection.CsvDatastore;
 import org.eobjects.analyzer.connection.Datastore;
 import org.eobjects.analyzer.connection.DatastoreCatalog;
 import org.eobjects.analyzer.connection.DatastoreCatalogImpl;
@@ -23,7 +24,6 @@ import org.eobjects.analyzer.descriptors.SimpleDescriptorProvider;
 import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.analyzer.job.JaxbJobReader;
 import org.eobjects.analyzer.job.JaxbJobWriter;
-import org.eobjects.analyzer.util.SchemaNavigator;
 import org.eobjects.metamodel.pojo.ArrayTableDataProvider;
 import org.eobjects.metamodel.pojo.TableDataProvider;
 import org.eobjects.metamodel.schema.Schema;
@@ -35,7 +35,7 @@ public class ConfigurationSerializer {
 	public static AnalyzerBeansConfiguration deserializeAnalyzerBeansDatastores(
 			String datastoresInput) {
 
-		List<Datastore> datastores = new ArrayList<Datastore>();
+		Map<String, List<TableDataProvider<?>>> tablesMap = new HashMap<String, List<TableDataProvider<?>>>();
 
 		String[] datastoreLines = datastoresInput.split("\n");
 		for (String datastoreLine : datastoreLines) {
@@ -52,11 +52,27 @@ public class ConfigurationSerializer {
 			SimpleTableDef tableDef = new SimpleTableDef(tableName, columnNames);
 			tableDataProviders.add(new ArrayTableDataProvider(tableDef,
 					new ArrayList<Object[]>()));
-			Datastore datastore = new PojoDatastore(datastoreName,
-						schemaName, tableDataProviders);
-			datastores.add(datastore);
+			String mapKey = datastoreName + "%#%" + schemaName;
+			if (!tablesMap.containsKey(mapKey)) {
+			    tablesMap.put(mapKey, tableDataProviders);
+			} else {
+			    tablesMap.get(mapKey).addAll(tableDataProviders);
+			}
+			
 		}
 
+		List<Datastore> datastores = new ArrayList<Datastore>();
+		for (Map.Entry<String, List<TableDataProvider<?>>> mapEntry : tablesMap.entrySet()) {
+            String mapKey = mapEntry.getKey();
+		    String[] split = mapKey.split("%#%");
+		    String datastoreName = split[0];
+		    String schemaName = split[1];
+		    List<TableDataProvider<?>> tableDataProviders = mapEntry.getValue();
+		    Datastore datastore = new PojoDatastore(datastoreName,
+		            schemaName, tableDataProviders);
+		    datastores.add(datastore);		    
+        }
+		
 		DatastoreCatalog datastoreCatalog = new DatastoreCatalogImpl(datastores);
 		
 		// TODO: Make class path scanning work.
@@ -95,7 +111,7 @@ public class ConfigurationSerializer {
 		for (String datastoreName : analyzerBeansConfiguration
 				.getDatastoreCatalog().getDatastoreNames()) {
 			Datastore datastore = datastoreCatalog.getDatastore(datastoreName);
-			if (datastore instanceof CsvDatastore) {
+//			if (datastore instanceof CsvDatastore) {
 				Schema schema = datastore.openConnection().getDataContext()
 						.getDefaultSchema();
 				for (Table table : schema.getTables()) {
@@ -114,29 +130,29 @@ public class ConfigurationSerializer {
 							datastoresOutputBuilder.append(",");
 					}
 				}
-			} else {
-				SchemaNavigator schemaNavigator = datastore.openConnection()
-						.getSchemaNavigator();
-				for (Schema schema : schemaNavigator.getSchemas()) {
-					for (Table table : schema.getTables()) {
-						datastoresOutputBuilder.append(datastoreName);
-						datastoresOutputBuilder.append(",");
-						datastoresOutputBuilder.append(schema.getName());
-						datastoresOutputBuilder.append(",");
-						datastoresOutputBuilder.append(table.getName());
-						datastoresOutputBuilder.append(",");
-						String[] columnNames = table.getColumnNames();
-						for (int i = 0; i < columnNames.length; i++) {
-							datastoresOutputBuilder.append(columnNames[i]);
-							if (i == columnNames.length - 1)
-								datastoresOutputBuilder.append("\n");
-							else
-								datastoresOutputBuilder.append(",");
-						}
-					}
-				}
-
-			}
+//			} else {
+//				SchemaNavigator schemaNavigator = datastore.openConnection()
+//						.getSchemaNavigator();
+//				for (Schema schema : schemaNavigator.getSchemas()) {
+//					for (Table table : schema.getTables()) {
+//						datastoresOutputBuilder.append(datastoreName);
+//						datastoresOutputBuilder.append(",");
+//						datastoresOutputBuilder.append(schema.getName());
+//						datastoresOutputBuilder.append(",");
+//						datastoresOutputBuilder.append(table.getName());
+//						datastoresOutputBuilder.append(",");
+//						String[] columnNames = table.getColumnNames();
+//						for (int i = 0; i < columnNames.length; i++) {
+//							datastoresOutputBuilder.append(columnNames[i]);
+//							if (i == columnNames.length - 1)
+//								datastoresOutputBuilder.append("\n");
+//							else
+//								datastoresOutputBuilder.append(",");
+//						}
+//					}
+//				}
+//
+//			}
 		}
 
 		return datastoresOutputBuilder.toString();

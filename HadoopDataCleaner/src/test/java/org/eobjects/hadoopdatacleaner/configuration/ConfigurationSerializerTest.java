@@ -2,7 +2,6 @@ package org.eobjects.hadoopdatacleaner.configuration;
 
 import junit.framework.Assert;
 
-import org.apache.hadoop.util.StringUtils;
 import org.eobjects.analyzer.beans.StringAnalyzer;
 import org.eobjects.analyzer.beans.transform.ConcatenatorTransformer;
 import org.eobjects.analyzer.beans.transform.TokenizerTransformer;
@@ -17,7 +16,7 @@ import org.eobjects.analyzer.descriptors.Descriptors;
 import org.eobjects.analyzer.descriptors.SimpleDescriptorProvider;
 import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.analyzer.util.SchemaNavigator;
-import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
+import org.eobjects.hadoopdatacleaner.configuration.sample.SampleHBaseConfiguration;
 import org.eobjects.metamodel.csv.CsvConfiguration;
 import org.eobjects.metamodel.schema.Column;
 import org.eobjects.metamodel.schema.Schema;
@@ -25,20 +24,26 @@ import org.eobjects.metamodel.schema.Table;
 import org.eobjects.metamodel.util.FileResource;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConfigurationSerializerTest {
 
-	private AnalyzerBeansConfiguration analyzerBeansConfiguration;
+    private static final Logger logger = LoggerFactory.getLogger(ConfigurationSerializer.class);
+    
+	private AnalyzerBeansConfiguration analyzerBeansConfigurationCsv;
+	private AnalyzerBeansConfiguration analyzerBeansConfigurationHBase;
 	private String analysisJobXml;
 
 	@Before
 	public void setUp() {
-		this.analyzerBeansConfiguration = buildAnalyzerBeansConfiguration();
+		this.analyzerBeansConfigurationCsv = buildAnalyzerBeansConfigurationCsv();
+		this.analyzerBeansConfigurationHBase = SampleHBaseConfiguration.buildAnalyzerBeansConfiguration();
 
 		this.analysisJobXml = hardcodedAnalysisJobXml();
 	}
 
-	private AnalyzerBeansConfiguration buildAnalyzerBeansConfiguration() {
+	private AnalyzerBeansConfiguration buildAnalyzerBeansConfigurationCsv() {
 		CsvConfiguration csvConfiguration = new CsvConfiguration(1, "UTF8",
 				';', '"', '\\');
 		Datastore datastore = new CsvDatastore(
@@ -66,14 +71,16 @@ public class ConfigurationSerializerTest {
 	}
 
 	@Test
-	public void testSerializeDeserializeDatastores() {
+	public void testSerializeDeserializeDatastoresFlatFile() {
 		String csv = ConfigurationSerializer
-				.serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfiguration);
+				.serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfigurationCsv);
+		logger.info("Csv: " + csv);
 		AnalyzerBeansConfiguration deserialized = ConfigurationSerializer
 				.deserializeAnalyzerBeansDatastores(csv);
-		for (String datastoreName : analyzerBeansConfiguration
+		for (String datastoreName : analyzerBeansConfigurationCsv
 				.getDatastoreCatalog().getDatastoreNames()) {
-			Datastore datastore = analyzerBeansConfiguration
+		    logger.info("Datastore: " + datastoreName);
+			Datastore datastore = analyzerBeansConfigurationCsv
 					.getDatastoreCatalog().getDatastore(datastoreName);
 			Datastore deserializedDatastore = deserialized
 					.getDatastoreCatalog().getDatastore(datastoreName);
@@ -84,17 +91,20 @@ public class ConfigurationSerializerTest {
 			SchemaNavigator deserializedSchemaNavigator = deserializedDatastore
 					.openConnection().getSchemaNavigator();
 			for (Schema schema : schemaNavigator.getSchemas()) {
+			    logger.info("\tSchema: " + schema.getName());
 				Schema deserializedSchema = deserializedSchemaNavigator
 						.getSchemaByName(schema.getName());
 				Assert.assertNotNull(deserializedSchema);
 
 				for (Table table : schema.getTables()) {
-					Table deserializedTable = deserializedSchema
+				    logger.info("\t\tTable: " + table.getName());
+				    Table deserializedTable = deserializedSchema
 							.getTableByName(table.getName());
 					Assert.assertNotNull(deserializedTable);
 
 					for (Column column : table.getColumns()) {
-						Column deserializedColumn = deserializedTable
+					    logger.info("\t\t\tColumn: " + column.getName());
+					    Column deserializedColumn = deserializedTable
 								.getColumnByName(column.getName());
 						Assert.assertNotNull(deserializedColumn);
 					}
@@ -102,14 +112,60 @@ public class ConfigurationSerializerTest {
 			}
 		}
 	}
+	
+	@Test
+    public void testSerializeDeserializeDatastoresHBase() {
+        String csv = ConfigurationSerializer
+                .serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfigurationHBase);
+        logger.info("Csv: " + csv);
+        AnalyzerBeansConfiguration deserialized = ConfigurationSerializer
+                .deserializeAnalyzerBeansDatastores(csv);
+        for (String datastoreName : analyzerBeansConfigurationHBase
+                .getDatastoreCatalog().getDatastoreNames()) {
+            logger.info("Datastore: " + datastoreName);
+            Datastore datastore = analyzerBeansConfigurationHBase
+                    .getDatastoreCatalog().getDatastore(datastoreName);
+            Datastore deserializedDatastore = deserialized
+                    .getDatastoreCatalog().getDatastore(datastoreName);
+            Assert.assertNotNull(deserializedDatastore);
+
+            SchemaNavigator schemaNavigator = datastore.openConnection()
+                    .getSchemaNavigator();
+            SchemaNavigator deserializedSchemaNavigator = deserializedDatastore
+                    .openConnection().getSchemaNavigator();
+            for (Schema schema : schemaNavigator.getSchemas()) {
+                String schemaName = schema.getName();
+                logger.info("\tSchema: " + schemaName);
+                Schema deserializedSchema = deserializedSchemaNavigator
+                        .getSchemaByName(schemaName);
+                Assert.assertNotNull(deserializedSchema);
+
+                for (Table table : schema.getTables()) {
+                    String tableName = table.getName();
+                    logger.info("\t\tTable: " + tableName);
+                    Table deserializedTable = deserializedSchema
+                            .getTableByName(tableName);
+                    Assert.assertNotNull(deserializedTable);
+
+                    for (Column column : table.getColumns()) {
+                        String columnName = column.getName();
+                        logger.info("\t\t\tColumn: " + columnName);
+                        Column deserializedColumn = deserializedTable
+                                .getColumnByName(columnName);
+                        Assert.assertNotNull(deserializedColumn);
+                    }
+                }
+            }
+        }
+    }
 
 	@Test
 	public void testDeserializeSerializeAnalysisJob() {
 		AnalysisJob deserializedAnalysisJob = ConfigurationSerializer
 				.deserializeAnalysisJobFromXml(analysisJobXml,
-						analyzerBeansConfiguration);
+						analyzerBeansConfigurationCsv);
 		String serializedAnalysisJobXml = ConfigurationSerializer
-				.serializeAnalysisJobToXml(analyzerBeansConfiguration,
+				.serializeAnalysisJobToXml(analyzerBeansConfigurationCsv,
 						deserializedAnalysisJob);
 		String expected = analysisJobXml.replace('\t', ' ').replace('\n', ' ')
 				.replace('\r', ' ').replace('\f', ' ');
