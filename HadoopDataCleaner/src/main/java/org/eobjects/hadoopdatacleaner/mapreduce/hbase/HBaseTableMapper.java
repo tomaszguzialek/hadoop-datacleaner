@@ -31,7 +31,7 @@ public class HBaseTableMapper extends TableMapper</* KEYOUT */Text, /* VALUEOUT 
 
     private AnalysisJob analysisJob;
 
-    private HBaseParser hbaseParser = new HBaseParser();
+    private HBaseParser hbaseParser;
 
     @Override
     protected void setup(
@@ -44,6 +44,7 @@ public class HBaseTableMapper extends TableMapper</* KEYOUT */Text, /* VALUEOUT 
         analyzerBeansConfiguration = ConfigurationSerializer
                 .deserializeAnalyzerBeansDatastores(datastoresConfigurationLines);
         analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
+        hbaseParser = new HBaseParser(analysisJob.getSourceColumns());
         super.setup(context);
     }
 
@@ -57,14 +58,8 @@ public class HBaseTableMapper extends TableMapper</* KEYOUT */Text, /* VALUEOUT 
         ConsumeRowHandler consumeRowHandler = new ConsumeRowHandler(analysisJob, analyzerBeansConfiguration,
                 configuration);
         List<InputRow> transformedRows = consumeRowHandler.consume(inputRow);
-        
+
         for (InputRow transformedRow : transformedRows) {
-            logger.info("Transformed row: ");
-            for (InputColumn<?> inputColumn : transformedRow.getInputColumns()) {
-                Object value = transformedRow.getValue(inputColumn);
-                logger.info("\t" + inputColumn.getName() + ": " + value);
-            }
-            
             SortedMapWritable rowWritable = new SortedMapWritable();
             for (InputColumn<?> inputColumn : transformedRow.getInputColumns()) {
                 String columnName = inputColumn.getName();

@@ -57,9 +57,9 @@ public class SampleHBaseConfiguration {
         try {
             ajb.setDatastore("countrycodes_hbase");
             
-            ajb.addSourceColumns("countrycodes.mainFamily:country_name",
-                    "countrycodes.mainFamily:iso2",
-                    "countrycodes.mainFamily:iso3");
+            ajb.addSourceColumns("countrycodes_schema.countrycodes.mainFamily:country_name",
+                    "countrycodes_schema.countrycodes.mainFamily:iso2",
+                    "countrycodes_schema.countrycodes.mainFamily:iso3");
 
             TransformerJobBuilder<ConcatenatorTransformer> concatenator = ajb
                     .addTransformer(ConcatenatorTransformer.class);
@@ -76,7 +76,14 @@ public class SampleHBaseConfiguration {
             
             AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer = ajb.addAnalyzer(ValueDistributionAnalyzer.class);
             valueDistributionAnalyzer.addInputColumn(ajb.getSourceColumnByName("mainFamily:country_name"));
-
+            
+            AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer2 = ajb.addAnalyzer(ValueDistributionAnalyzer.class);
+            valueDistributionAnalyzer2.addInputColumn(ajb.getSourceColumnByName("mainFamily:iso2"));
+            
+//            AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer3 = ajb.addAnalyzer(ValueDistributionAnalyzer.class);
+//            valueDistributionAnalyzer3.addInputColumn(ajb.getSourceColumnByName("mainFamily:country_name"));
+//            valueDistributionAnalyzer3.addInputColumn(ajb.getSourceColumnByName("mainFamily:iso2"));
+            
             return ajb.toAnalysisJob();
         } finally {
             ajb.close();

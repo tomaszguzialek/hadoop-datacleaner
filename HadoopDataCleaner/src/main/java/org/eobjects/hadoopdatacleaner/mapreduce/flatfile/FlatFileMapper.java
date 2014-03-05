@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, SortedMapWritable> {
 
+    @SuppressWarnings("unused")
     private static final Logger logger = LoggerFactory.getLogger(FlatFileMapper.class);
 
     private AnalyzerBeansConfiguration analyzerBeansConfiguration;
@@ -51,12 +52,6 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
         List<InputRow> transformedRows = consumeRowHandler.consume(inputRow);
  
         for (InputRow transformedRow : transformedRows) {
-            logger.info("Transformed row: ");
-            for (InputColumn<?> inputColumn : transformedRow.getInputColumns()) {
-                Object value = transformedRow.getValue(inputColumn);
-                logger.info("\t" + inputColumn.getName() + ": " + value);
-            }
-            
             SortedMapWritable rowWritable = new SortedMapWritable();
             for (InputColumn<?> inputColumn : transformedRow.getInputColumns()) {
                 String columnName = inputColumn.getName();
