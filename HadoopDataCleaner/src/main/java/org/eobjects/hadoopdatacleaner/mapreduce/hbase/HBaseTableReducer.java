@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.mapreduce.TableReducer;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
@@ -38,7 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class HBaseTableReducer extends
-        TableReducer</* KEYIN */Text, /* VALUEIN */SortedMapWritable, /* KEYOUT */KeyValue> {
+        TableReducer</* KEYIN */Text, /* VALUEIN */SortedMapWritable, /* KEYOUT */NullWritable> {
 
     private static final Logger logger = LoggerFactory.getLogger(HBaseTableReducer.class);
 
@@ -62,7 +63,7 @@ public class HBaseTableReducer extends
             Result result = new Result(keyValues);
             ResultUtils.printResult(result, logger);
             Put put = ResultUtils.preparePut(result);
-            context.write(null, put);
+            context.write(NullWritable.get(), put);
         }
         logger.info("end of analyzerKey = " + analyzerKey.toString() + " rows.");
     }
