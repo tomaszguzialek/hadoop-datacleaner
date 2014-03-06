@@ -50,7 +50,7 @@ public class HBaseTableMapper extends TableMapper</* KEYOUT */Text, /* VALUEOUT 
 
     private AnalysisJob analysisJob;
 
-    private HBaseParser hbaseParser;
+    private HBaseParser hBaseParser;
 
     @Override
     protected void setup(
@@ -63,14 +63,14 @@ public class HBaseTableMapper extends TableMapper</* KEYOUT */Text, /* VALUEOUT 
         analyzerBeansConfiguration = ConfigurationSerializer
                 .deserializeAnalyzerBeansDatastores(datastoresConfigurationLines);
         analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
-        hbaseParser = new HBaseParser(analysisJob.getSourceColumns());
+        hBaseParser = new HBaseParser(analysisJob.getSourceColumns());
         super.setup(context);
     }
 
     public void map(/* KEYIN */ImmutableBytesWritable row, /* VALUEIN */Result result, Context context)
             throws InterruptedException, IOException {
 
-        InputRow inputRow = hbaseParser.prepareRow(result);
+        InputRow inputRow = hBaseParser.prepareRow(result);
 
         ConsumeRowHandler.Configuration configuration = new ConsumeRowHandler.Configuration();
         configuration.includeAnalyzers = false;

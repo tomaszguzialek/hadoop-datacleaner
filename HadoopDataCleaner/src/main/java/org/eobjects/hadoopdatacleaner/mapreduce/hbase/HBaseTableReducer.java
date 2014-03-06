@@ -38,7 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class HBaseTableReducer extends
-        TableReducer</* KEYIN */Text, /* VALUEIN */SortedMapWritable, /* VALUEOUT */KeyValue> {
+        TableReducer</* KEYIN */Text, /* VALUEIN */SortedMapWritable, /* KEYOUT */KeyValue> {
 
     private static final Logger logger = LoggerFactory.getLogger(HBaseTableReducer.class);
 
