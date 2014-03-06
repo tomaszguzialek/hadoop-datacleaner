@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 public class FlatFileReducer extends Reducer<LongWritable, SortedMapWritable, LongWritable, Text> {
 
+    @SuppressWarnings("unused")
     private static final Logger logger = LoggerFactory.getLogger(FlatFileReducer.class);
     
     private AnalyzerBeansConfiguration analyzerBeansConfiguration;
