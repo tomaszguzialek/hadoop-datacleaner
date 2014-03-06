@@ -87,8 +87,6 @@ public class HBaseMapperTest {
         String expectedAnalyzerKey2 = "Value distribution (mainFamily:iso2)";
         
         mapDriver.withInput(inputKey, inputResult);
-        mapDriver.withOutput(new Text(expectedAnalyzerKey1), expectedOutput);
-        mapDriver.withOutput(new Text(expectedAnalyzerKey2), expectedOutput);
         List<Pair<Text, SortedMapWritable>> actualOutputs = mapDriver.run();
         Assert.assertEquals(actualOutputs.size(), 2);
         Pair<Text, SortedMapWritable> actualOutput1 = actualOutputs.get(0);
