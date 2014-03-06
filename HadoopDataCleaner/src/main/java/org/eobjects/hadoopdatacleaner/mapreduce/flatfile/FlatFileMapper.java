@@ -28,7 +28,7 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
 
     private AnalysisJob analysisJob;
 
-    private CsvParser csvParser = new CsvParser();
+    private CsvParser csvParser;
 
     protected void setup(Mapper<LongWritable, Text, LongWritable, SortedMapWritable>.Context context)
             throws IOException, InterruptedException {
@@ -38,12 +38,12 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
         String analysisJobXml = mapReduceConfiguration.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
         analyzerBeansConfiguration = ConfigurationSerializer.deserializeAnalyzerBeansDatastores(datastoresConfigurationLines);
         analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
+        csvParser = new CsvParser(analysisJob.getSourceColumns());
         super.setup(context);
     }
 
     @Override
     public void map(LongWritable key, Text csvLine, Context context) throws IOException, InterruptedException {
-        csvParser.parseHeaderRow(csvLine, analysisJob);
         InputRow inputRow = csvParser.prepareRow(csvLine);
 
         ConsumeRowHandler.Configuration configuration = new ConsumeRowHandler.Configuration();

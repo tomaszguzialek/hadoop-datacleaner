@@ -8,21 +8,22 @@ import org.apache.hadoop.io.Text;
 import org.eobjects.analyzer.data.InputColumn;
 import org.eobjects.analyzer.data.InputRow;
 import org.eobjects.analyzer.data.MockInputRow;
-import org.eobjects.analyzer.job.AnalysisJob;
 
 public class CsvParser {
-    
+
+    public CsvParser(Collection<InputColumn<?>> jobColumns) {
+        this.jobColumns = jobColumns;
+    }
+
     private Collection<InputColumn<?>> jobColumns;
 
     private Collection<Boolean> usedColumns;
 
-    public void parseHeaderRow(Text csvLine, AnalysisJob analysisJob) {
+    private void parseHeaderRow(Text csvLine) {
         if (usedColumns == null) {
             usedColumns = new ArrayList<Boolean>();
-            jobColumns = analysisJob.getSourceColumns();
 
             String[] values = csvLine.toString().split(";");
-
 
             for (String value : values) {
                 Boolean found = false;
@@ -41,11 +42,14 @@ public class CsvParser {
     }
 
     public InputRow prepareRow(Text csvLine) {
+        if (usedColumns == null)
+            parseHeaderRow(csvLine);
+        
         String[] values = csvLine.toString().split(";");
 
         Iterator<InputColumn<?>> jobColumnsIterator = jobColumns.iterator();
         Iterator<Boolean> usedColumnsIterator = usedColumns.iterator();
-        
+
         MockInputRow row = new MockInputRow();
         for (String value : values) {
             Boolean used = usedColumnsIterator.next();
@@ -56,5 +60,5 @@ public class CsvParser {
         }
         return row;
     }
-    
+
 }
