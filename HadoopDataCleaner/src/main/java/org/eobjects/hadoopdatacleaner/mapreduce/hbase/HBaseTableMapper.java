@@ -29,7 +29,6 @@ import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
-import org.eobjects.analyzer.data.InputColumn;
 import org.eobjects.analyzer.data.InputRow;
 import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.analyzer.job.AnalyzerJob;
@@ -38,7 +37,7 @@ import org.eobjects.analyzer.util.LabelUtils;
 import org.eobjects.hadoopdatacleaner.FlatFileTool;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.datastores.HBaseParser;
-import org.eobjects.hadoopdatacleaner.datastores.hbase.utils.ResultUtils;
+import org.eobjects.hadoopdatacleaner.datastores.RowUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,17 +78,12 @@ public class HBaseTableMapper extends TableMapper</* KEYOUT */Text, /* VALUEOUT 
         List<InputRow> transformedRows = consumeRowHandler.consume(inputRow);
 
         for (InputRow transformedRow : transformedRows) {
-            SortedMapWritable rowWritable = new SortedMapWritable();
-            for (InputColumn<?> inputColumn : transformedRow.getInputColumns()) {
-                String columnName = inputColumn.getName();
-                Object value = transformedRow.getValue(inputColumn);
-                rowWritable.put(new Text(columnName), new Text(value.toString()));
-            }
+            SortedMapWritable rowWritable = RowUtils.inputRowToSortedMapWritable(transformedRow);
             for (AnalyzerJob analyzerJob : analysisJob.getAnalyzerJobs()) {
                 context.write(new Text(LabelUtils.getLabel(analyzerJob)), rowWritable);
             }
         }
 
-        ResultUtils.printResult(result, logger);
+        RowUtils.printResult(result, logger);
     }
 }

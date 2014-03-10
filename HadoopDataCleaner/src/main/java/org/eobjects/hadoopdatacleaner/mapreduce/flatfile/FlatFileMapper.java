@@ -28,13 +28,13 @@ import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
-import org.eobjects.analyzer.data.InputColumn;
 import org.eobjects.analyzer.data.InputRow;
 import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.analyzer.job.runner.ConsumeRowHandler;
 import org.eobjects.hadoopdatacleaner.FlatFileTool;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.datastores.CsvParser;
+import org.eobjects.hadoopdatacleaner.datastores.RowUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,9 +55,10 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
         String datastoresConfigurationLines = mapReduceConfiguration
                 .get(FlatFileTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY);
         String analysisJobXml = mapReduceConfiguration.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
-        analyzerBeansConfiguration = ConfigurationSerializer.deserializeAnalyzerBeansDatastores(datastoresConfigurationLines);
+        analyzerBeansConfiguration = ConfigurationSerializer
+                .deserializeAnalyzerBeansDatastores(datastoresConfigurationLines);
         analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
-        csvParser = new CsvParser(analysisJob.getSourceColumns());
+        csvParser = new CsvParser(analysisJob.getSourceColumns(), ";");
         super.setup(context);
     }
 
@@ -67,16 +68,12 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
 
         ConsumeRowHandler.Configuration configuration = new ConsumeRowHandler.Configuration();
         configuration.includeAnalyzers = false;
-        ConsumeRowHandler consumeRowHandler = new ConsumeRowHandler(analysisJob, analyzerBeansConfiguration, configuration);
+        ConsumeRowHandler consumeRowHandler = new ConsumeRowHandler(analysisJob, analyzerBeansConfiguration,
+                configuration);
         List<InputRow> transformedRows = consumeRowHandler.consume(inputRow);
- 
+
         for (InputRow transformedRow : transformedRows) {
-            SortedMapWritable rowWritable = new SortedMapWritable();
-            for (InputColumn<?> inputColumn : transformedRow.getInputColumns()) {
-                String columnName = inputColumn.getName();
-                Object value = transformedRow.getValue(inputColumn);
-                rowWritable.put(new Text(columnName), new Text(value.toString()));
-            }
+            SortedMapWritable rowWritable = RowUtils.inputRowToSortedMapWritable(transformedRow);
             context.write(key, rowWritable);
         }
     }

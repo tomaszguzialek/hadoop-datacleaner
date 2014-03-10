@@ -20,21 +20,18 @@
 package org.eobjects.hadoopdatacleaner.mapreduce.flatfile;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.hadoopdatacleaner.FlatFileTool;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
+import org.eobjects.hadoopdatacleaner.datastores.CsvParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,26 +59,14 @@ public class FlatFileReducer extends Reducer<LongWritable, SortedMapWritable, Nu
     public void reduce(LongWritable key, Iterable<SortedMapWritable> rows, Context context) throws IOException,
             InterruptedException {
         
+//        Collection<AnalyzerJob> analyzerJobs = analysisJob.getAnalyzerJobs();
         
+//        for (AnalyzerJob analyzerJob : analyzerJobs) {
+//            analyzerJob.
+//        }
         
-        emitRows(NullWritable.get(), rows, context);
-    }
-
-    private void emitRows(NullWritable key, Iterable<SortedMapWritable> rows, Context context) throws IOException,
-            InterruptedException {
-        Text finalText = new Text();
-        for (SortedMapWritable row : rows) {
-            for (@SuppressWarnings("rawtypes")
-            Iterator<Entry<WritableComparable, Writable>> iterator = row.entrySet().iterator(); iterator.hasNext();) {
-                Text value = ((Text) iterator.next().getValue());
-                finalText.set(finalText.toString() + value.toString());
-                if (iterator.hasNext())
-                    finalText.set(finalText.toString() + ";");
-                else
-                    finalText.set(finalText.toString());
-            }
-        }
-        context.write(key, finalText);
+        Text finalText = CsvParser.toCsvText(rows);
+        context.write(NullWritable.get(), finalText);
     }
 
 }

@@ -22,27 +22,38 @@ package org.eobjects.hadoopdatacleaner.datastores;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map.Entry;
 
+import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
 import org.eobjects.analyzer.data.InputColumn;
 import org.eobjects.analyzer.data.InputRow;
 import org.eobjects.analyzer.data.MockInputRow;
 
 public class CsvParser {
 
-    public CsvParser(Collection<InputColumn<?>> jobColumns) {
-        this.jobColumns = jobColumns;
-    }
-
     private Collection<InputColumn<?>> jobColumns;
-
+    
     private Collection<Boolean> usedColumns;
+
+    private String delimiter;
+
+    public CsvParser(Collection<InputColumn<?>> jobColumns) {
+        this(jobColumns, ",");
+    }
+    
+    public CsvParser(Collection<InputColumn<?>> jobColumns, String delimiter) {
+        this.jobColumns = jobColumns;
+        this.delimiter = delimiter;
+    }
 
     private void parseHeaderRow(Text csvLine) {
         if (usedColumns == null) {
             usedColumns = new ArrayList<Boolean>();
 
-            String[] values = csvLine.toString().split(";");
+            String[] values = csvLine.toString().split(delimiter);
 
             for (String value : values) {
                 Boolean found = false;
@@ -78,6 +89,22 @@ public class CsvParser {
             }
         }
         return row;
+    }
+    
+    public static Text toCsvText(Iterable<SortedMapWritable> rows) {
+        Text finalText = new Text();
+        for (SortedMapWritable row : rows) {
+            for (@SuppressWarnings("rawtypes")
+            Iterator<Entry<WritableComparable, Writable>> iterator = row.entrySet().iterator(); iterator.hasNext();) {
+                Text value = ((Text) iterator.next().getValue());
+                finalText.set(finalText.toString() + value.toString());
+                if (iterator.hasNext())
+                    finalText.set(finalText.toString() + ";");
+                else
+                    finalText.set(finalText.toString());
+            }
+        }
+        return finalText;
     }
 
 }

@@ -17,16 +17,26 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.eobjects.hadoopdatacleaner.datastores.hbase.utils;
+package org.eobjects.hadoopdatacleaner.datastores;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.SplitKeyValue;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.io.SortedMapWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
+import org.eobjects.analyzer.data.InputColumn;
+import org.eobjects.analyzer.data.InputRow;
 import org.slf4j.Logger;
 
-public class ResultUtils {
+public class RowUtils {
 
     public static void printResult(Result result, Logger logger) {
         logger.info("Row: ");
@@ -50,4 +60,31 @@ public class ResultUtils {
         }
         return put;
     }
+    
+    public static SortedMapWritable inputRowToSortedMapWritable(InputRow inputRow) {
+        SortedMapWritable rowWritable = new SortedMapWritable();
+        for (InputColumn<?> inputColumn : inputRow.getInputColumns()) {
+            String columnName = inputColumn.getName();
+            Object value = inputRow.getValue(inputColumn);
+            rowWritable.put(new Text(columnName), new Text(value.toString()));
+        }
+        return rowWritable;
+    }
+    
+    public static Result sortedMapWritableToResult(SortedMapWritable row) {
+        List<KeyValue> keyValues = new ArrayList<KeyValue>();
+        for (@SuppressWarnings("rawtypes")
+        Map.Entry<WritableComparable, Writable> rowEntry : row.entrySet()) {
+            Text columnFamilyAndName = (Text) rowEntry.getKey();
+            Text columnValue = (Text) rowEntry.getValue();
+            String[] split = columnFamilyAndName.toString().split(":");
+            String columnFamily = split[0];
+            String columnName = split[1];
+            KeyValue keyValue = new KeyValue(Bytes.toBytes(columnValue.toString()), Bytes.toBytes(columnFamily),
+                    Bytes.toBytes(columnName), Bytes.toBytes(columnValue.toString()));
+            keyValues.add(keyValue);
+        }
+        return new Result(keyValues);
+    }
+
 }
