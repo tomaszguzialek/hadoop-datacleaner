@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mrunit.mapreduce.MapDriver;
@@ -57,8 +58,8 @@ public class FlatFileMapperReducerTest {
     private static final String CSV_FILE_PATH = "src/test/resources/countrycodes.csv";
 
     MapDriver<LongWritable, Text, LongWritable, SortedMapWritable> mapDriver;
-    ReduceDriver<LongWritable, SortedMapWritable, LongWritable, Text> reduceDriver;
-    MapReduceDriver<LongWritable, Text, LongWritable, SortedMapWritable, LongWritable, Text> mapReduceDriver;
+    ReduceDriver<LongWritable, SortedMapWritable, NullWritable, Text> reduceDriver;
+    MapReduceDriver<LongWritable, Text, LongWritable, SortedMapWritable, NullWritable, Text> mapReduceDriver;
 
     @Before
     public void setUp() {
@@ -109,7 +110,7 @@ public class FlatFileMapperReducerTest {
         reduceDriver.withInput(new LongWritable(0), rows);
         reduceDriver
                 .withOutput(
-                        new LongWritable(0),
+                        NullWritable.get(),
                         new Text(
                                 "Country name;ISO 3166-2;ISO 3166-2_ISO 3166-3;ISO 3166-3;ISO Numeric;Linked to country;Synonym1;Synonym2;Synonym3\n"));
         reduceDriver.runTest();
@@ -126,7 +127,7 @@ public class FlatFileMapperReducerTest {
         rows.add(poland);
 
         reduceDriver.withInput(new LongWritable(44), rows);
-        reduceDriver.withOutput(new LongWritable(44), new Text("Poland;PL;POL\n"));
+        reduceDriver.withOutput(NullWritable.get(), new Text("Poland;PL;POL\n"));
         reduceDriver.runTest();
 
     }

@@ -76,8 +76,8 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
                 String columnName = inputColumn.getName();
                 Object value = transformedRow.getValue(inputColumn);
                 rowWritable.put(new Text(columnName), new Text(value.toString()));
-                context.write(key, rowWritable);
             }
+            context.write(key, rowWritable);
         }
     }
 }

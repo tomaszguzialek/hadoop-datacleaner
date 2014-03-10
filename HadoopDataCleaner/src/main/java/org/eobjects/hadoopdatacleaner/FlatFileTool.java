@@ -84,7 +84,7 @@ public final class FlatFileTool extends HadoopDataCleanerTool implements Tool {
 		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(SortedMapWritable.class);
 		
-		job.setNumReduceTasks(2);
+		job.setNumReduceTasks(1);
 		
 		FileSystem hdfs = FileSystem.get(mapReduceConfiguration);
 		if (hdfs.exists(new Path(output)))

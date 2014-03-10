@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
@@ -37,7 +38,7 @@ import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FlatFileReducer extends Reducer<LongWritable, SortedMapWritable, LongWritable, Text> {
+public class FlatFileReducer extends Reducer<LongWritable, SortedMapWritable, NullWritable, Text> {
 
     @SuppressWarnings("unused")
     private static final Logger logger = LoggerFactory.getLogger(FlatFileReducer.class);
@@ -46,7 +47,7 @@ public class FlatFileReducer extends Reducer<LongWritable, SortedMapWritable, Lo
 
     private AnalysisJob analysisJob;
     
-    protected void setup(Reducer<LongWritable, SortedMapWritable, LongWritable, Text>.Context context)
+    protected void setup(Reducer<LongWritable, SortedMapWritable, NullWritable, Text>.Context context)
             throws IOException, InterruptedException {
         Configuration mapReduceConfiguration = context.getConfiguration();
         String datastoresConfigurationLines = mapReduceConfiguration
@@ -61,6 +62,13 @@ public class FlatFileReducer extends Reducer<LongWritable, SortedMapWritable, Lo
     public void reduce(LongWritable key, Iterable<SortedMapWritable> rows, Context context) throws IOException,
             InterruptedException {
         
+        
+        
+        emitRows(NullWritable.get(), rows, context);
+    }
+
+    private void emitRows(NullWritable key, Iterable<SortedMapWritable> rows, Context context) throws IOException,
+            InterruptedException {
         Text finalText = new Text();
         for (SortedMapWritable row : rows) {
             for (@SuppressWarnings("rawtypes")
@@ -70,7 +78,7 @@ public class FlatFileReducer extends Reducer<LongWritable, SortedMapWritable, Lo
                 if (iterator.hasNext())
                     finalText.set(finalText.toString() + ";");
                 else
-                    finalText.set(finalText.toString() + "\n");
+                    finalText.set(finalText.toString());
             }
         }
         context.write(key, finalText);
