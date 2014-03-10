@@ -112,7 +112,7 @@ public class FlatFileMapperReducerTest {
                 .withOutput(
                         NullWritable.get(),
                         new Text(
-                                "Country name;ISO 3166-2;ISO 3166-2_ISO 3166-3;ISO 3166-3;ISO Numeric;Linked to country;Synonym1;Synonym2;Synonym3\n"));
+                                "Country name;ISO 3166-2;ISO 3166-2_ISO 3166-3;ISO 3166-3;ISO Numeric;Linked to country;Synonym1;Synonym2;Synonym3"));
         reduceDriver.runTest();
     }
 
@@ -127,7 +127,7 @@ public class FlatFileMapperReducerTest {
         rows.add(poland);
 
         reduceDriver.withInput(new LongWritable(44), rows);
-        reduceDriver.withOutput(NullWritable.get(), new Text("Poland;PL;POL\n"));
+        reduceDriver.withOutput(NullWritable.get(), new Text("Poland;PL;POL"));
         reduceDriver.runTest();
 
     }

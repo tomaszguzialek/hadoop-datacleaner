@@ -47,7 +47,7 @@ public class CsvParserTest {
         sourceColumns.add(new MockInputColumn<String>("Linked to country"));
         sourceColumns.add(new MockInputColumn<String>("Synonym1"));
         sourceColumns.add(new MockInputColumn<String>("Synonym2"));
-        this.csvParser = new CsvParser(sourceColumns);
+        this.csvParser = new CsvParser(sourceColumns, ";");
     }
 
     @Test

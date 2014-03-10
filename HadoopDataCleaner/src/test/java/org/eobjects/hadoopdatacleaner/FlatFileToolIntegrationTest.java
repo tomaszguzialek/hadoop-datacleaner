@@ -43,7 +43,7 @@ import org.eobjects.metamodel.csv.CsvConfiguration;
 import org.eobjects.metamodel.util.FileResource;
 import org.junit.Test;
 
-public class FlatFileToolTest {
+public class FlatFileToolIntegrationTest {
 
     FlatFileTool flatFileTool;
 
