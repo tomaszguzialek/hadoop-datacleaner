@@ -47,35 +47,30 @@ public class SampleHBaseConfiguration {
 
     public static AnalyzerBeansConfiguration buildAnalyzerBeansConfiguration() {
         List<TableDataProvider<?>> tableDataProviders = new ArrayList<TableDataProvider<?>>();
-        SimpleTableDef tableDef1 = new SimpleTableDef("countrycodes", new String[] {"mainFamily:country_name", "mainFamily:iso2", "mainFamily:iso3"});
-        SimpleTableDef tableDef2 = new SimpleTableDef("countrycodes_output", new String[] {"mainFamily:country_name", "mainFamily:iso2", "mainFamily:iso3"});
+        SimpleTableDef tableDef1 = new SimpleTableDef("countrycodes", new String[] { "mainFamily:country_name",
+                "mainFamily:iso2", "mainFamily:iso3" });
+        SimpleTableDef tableDef2 = new SimpleTableDef("countrycodes_output", new String[] { "mainFamily:country_name",
+                "mainFamily:iso2", "mainFamily:iso3" });
         tableDataProviders.add(new ArrayTableDataProvider(tableDef1, new ArrayList<Object[]>()));
         tableDataProviders.add(new ArrayTableDataProvider(tableDef2, new ArrayList<Object[]>()));
         Datastore datastore = new PojoDatastore("countrycodes_hbase", "countrycodes_schema", tableDataProviders);
-        
+
         DatastoreCatalog datastoreCatalog = new DatastoreCatalogImpl(datastore);
 
-        SimpleDescriptorProvider descriptorProvider = new SimpleDescriptorProvider(
-                true);
-        descriptorProvider.addTransformerBeanDescriptor(Descriptors
-                .ofTransformer(ConcatenatorTransformer.class));
-        descriptorProvider.addTransformerBeanDescriptor(Descriptors
-                .ofTransformer(TokenizerTransformer.class));
-        descriptorProvider.addAnalyzerBeanDescriptor(Descriptors
-                .ofAnalyzer(InsertIntoTableAnalyzer.class));
-        descriptorProvider.addAnalyzerBeanDescriptor(Descriptors
-                .ofAnalyzer(StringAnalyzer.class));
+        SimpleDescriptorProvider descriptorProvider = new SimpleDescriptorProvider(true);
+        descriptorProvider.addTransformerBeanDescriptor(Descriptors.ofTransformer(ConcatenatorTransformer.class));
+        descriptorProvider.addTransformerBeanDescriptor(Descriptors.ofTransformer(TokenizerTransformer.class));
+        descriptorProvider.addAnalyzerBeanDescriptor(Descriptors.ofAnalyzer(InsertIntoTableAnalyzer.class));
+        descriptorProvider.addAnalyzerBeanDescriptor(Descriptors.ofAnalyzer(StringAnalyzer.class));
 
-        return new AnalyzerBeansConfigurationImpl().replace(datastoreCatalog)
-                .replace(descriptorProvider);
+        return new AnalyzerBeansConfigurationImpl().replace(datastoreCatalog).replace(descriptorProvider);
     }
 
-    public static AnalysisJob buildAnalysisJob(
-            AnalyzerBeansConfiguration configuration) {
+    public static AnalysisJob buildAnalysisJob(AnalyzerBeansConfiguration configuration) {
         AnalysisJobBuilder ajb = new AnalysisJobBuilder(configuration);
         try {
             ajb.setDatastore("countrycodes_hbase");
-            
+
             ajb.addSourceColumns("countrycodes_schema.countrycodes.mainFamily:country_name",
                     "countrycodes_schema.countrycodes.mainFamily:iso2",
                     "countrycodes_schema.countrycodes.mainFamily:iso3");
@@ -86,28 +81,38 @@ public class SampleHBaseConfiguration {
             concatenator.addInputColumns(ajb.getSourceColumnByName("mainFamily:iso3"));
             concatenator.setConfiguredProperty("Separator", "_");
             concatenator.getOutputColumns().get(0).setName("mainFamily:iso2_iso3");
-            
-//          TransformerJobBuilder<TokenizerTransformer> tokenizer = ajb.addTransformer(TokenizerTransformer.class);
-//          tokenizer.setConfiguredProperty("Token target", TokenizerTransformer.TokenTarget.COLUMNS);
-//          tokenizer.addInputColumns(concatenator.getOutputColumns().get(0));
-//          tokenizer.setConfiguredProperty("Number of tokens", 2);
-//          tokenizer.setConfiguredProperty("Delimiters", new char[] { '_' });
-//          tokenizer.getOutputColumns().get(0).setName("tokenized");
-            
-            AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer = ajb.addAnalyzer(ValueDistributionAnalyzer.class);
+
+            // TransformerJobBuilder<TokenizerTransformer> tokenizer =
+            // ajb.addTransformer(TokenizerTransformer.class);
+            // tokenizer.setConfiguredProperty("Token target",
+            // TokenizerTransformer.TokenTarget.COLUMNS);
+            // tokenizer.addInputColumns(concatenator.getOutputColumns().get(0));
+            // tokenizer.setConfiguredProperty("Number of tokens", 2);
+            // tokenizer.setConfiguredProperty("Delimiters", new char[] { '_'
+            // });
+            // tokenizer.getOutputColumns().get(0).setName("tokenized");
+
+            AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer = ajb
+                    .addAnalyzer(ValueDistributionAnalyzer.class);
             valueDistributionAnalyzer.addInputColumn(ajb.getSourceColumnByName("mainFamily:country_name"));
-            
-            AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer2 = ajb.addAnalyzer(ValueDistributionAnalyzer.class);
+
+            AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer2 = ajb
+                    .addAnalyzer(ValueDistributionAnalyzer.class);
             valueDistributionAnalyzer2.addInputColumn(ajb.getSourceColumnByName("mainFamily:iso2"));
-            
-//            AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer3 = ajb.addAnalyzer(ValueDistributionAnalyzer.class);
-//            valueDistributionAnalyzer3.addInputColumn(ajb.getSourceColumnByName("mainFamily:country_name"));
-//            valueDistributionAnalyzer3.addInputColumn(ajb.getSourceColumnByName("mainFamily:iso2"));
-            
+
+            // AnalyzerJobBuilder<ValueDistributionAnalyzer>
+            // valueDistributionAnalyzer3 =
+            // ajb.addAnalyzer(ValueDistributionAnalyzer.class);
+            // valueDistributionAnalyzer3.addInputColumn(ajb.getSourceColumnByName("mainFamily:country_name"));
+            // valueDistributionAnalyzer3.addInputColumn(ajb.getSourceColumnByName("mainFamily:iso2"));
+
+            AnalyzerJobBuilder<StringAnalyzer> stringAnalyzer = ajb.addAnalyzer(StringAnalyzer.class);
+            stringAnalyzer.addInputColumn(ajb.getSourceColumnByName("mainFamily:iso3"));
+
             return ajb.toAnalysisJob();
         } finally {
             ajb.close();
         }
     }
-    
+
 }
