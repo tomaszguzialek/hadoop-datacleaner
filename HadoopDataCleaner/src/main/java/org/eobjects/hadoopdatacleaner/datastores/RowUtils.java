@@ -20,6 +20,7 @@
 package org.eobjects.hadoopdatacleaner.datastores;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +35,8 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.eobjects.analyzer.data.InputColumn;
 import org.eobjects.analyzer.data.InputRow;
+import org.eobjects.analyzer.data.MockInputColumn;
+import org.eobjects.analyzer.data.MockInputRow;
 import org.slf4j.Logger;
 
 public class RowUtils {
@@ -69,6 +72,25 @@ public class RowUtils {
             rowWritable.put(new Text(columnName), new Text(value.toString()));
         }
         return rowWritable;
+    }
+    
+    public static InputRow sortedMapWritableToInputRow(SortedMapWritable rowWritable, Collection<InputColumn<?>> sourceColumns) {
+        MockInputRow inputRow = new MockInputRow();
+
+        for (@SuppressWarnings("rawtypes")
+        Map.Entry<WritableComparable, Writable> rowEntry : rowWritable.entrySet()) {
+            Text columnName = (Text) rowEntry.getKey();
+            Text columnValue = (Text) rowEntry.getValue();
+            for (InputColumn<?> sourceColumn : sourceColumns) {
+                String sourceColumnName = sourceColumn.getName();
+                if (sourceColumnName.equals(columnName.toString())) {
+                    inputRow.put(sourceColumn, columnValue.toString());
+                    break;
+                }
+            }
+        }
+        
+        return inputRow;
     }
     
     public static Result sortedMapWritableToResult(SortedMapWritable row) {
