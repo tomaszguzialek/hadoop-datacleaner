@@ -19,8 +19,11 @@
  */
 package org.eobjects.hadoopdatacleaner.mapreduce.flatfile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import junit.framework.Assert;
 
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -29,6 +32,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
+import org.apache.hadoop.mrunit.types.Pair;
 import org.eobjects.analyzer.beans.StringAnalyzer;
 import org.eobjects.analyzer.beans.transform.ConcatenatorTransformer;
 import org.eobjects.analyzer.beans.transform.TokenizerTransformer;
@@ -48,9 +52,11 @@ import org.eobjects.analyzer.job.builder.AnalyzerJobBuilder;
 import org.eobjects.analyzer.job.builder.TransformerJobBuilder;
 import org.eobjects.hadoopdatacleaner.FlatFileTool;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
+import org.eobjects.hadoopdatacleaner.datastores.CsvParser;
 import org.eobjects.metamodel.csv.CsvConfiguration;
 import org.eobjects.metamodel.util.FileResource;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class FlatFileMapperReducerTest {
@@ -61,10 +67,12 @@ public class FlatFileMapperReducerTest {
     ReduceDriver<LongWritable, SortedMapWritable, NullWritable, Text> reduceDriver;
     MapReduceDriver<LongWritable, Text, LongWritable, SortedMapWritable, NullWritable, Text> mapReduceDriver;
 
+    private AnalysisJob analysisJob;
+
     @Before
     public void setUp() {
         AnalyzerBeansConfiguration analyzerBeansConfiguration = buildAnalyzerBeansConfigurationLocalFS(CSV_FILE_PATH);
-        AnalysisJob analysisJob = buildAnalysisJob(analyzerBeansConfiguration, CSV_FILE_PATH);
+        analysisJob = buildAnalysisJob(analyzerBeansConfiguration, CSV_FILE_PATH);
         String analyzerBeansConfigurationDatastores = ConfigurationSerializer
                 .serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfiguration);
         String analysisJobXml = ConfigurationSerializer.serializeAnalysisJobToXml(analyzerBeansConfiguration,
@@ -82,13 +90,36 @@ public class FlatFileMapperReducerTest {
         mapReduceDriver = MapReduceDriver.newMapReduceDriver(flatFileMapper, flatFileReducer);
     }
 
+    @Ignore
     @Test
-    public void testMapper() {
-        mapDriver.withInput(new LongWritable(0), new Text(
-                "Country name;ISO 3166-2;ISO 3166-3;ISO Numeric;Linked to country;Synonym1;Synonym2;Synonym3"));
-        mapDriver.withInput(new LongWritable(44), new Text("Poland;PL;POL;616;"));
-        mapDriver.withInput(new LongWritable(66), new Text("Denmark;DK;DNK;208;;Danmark;Danemark;"));
-        mapDriver.runTest();
+    public void testMapper() throws IOException {
+        SortedMapWritable expectedPoland = new SortedMapWritable();
+        expectedPoland.put(new Text("Country name"), new Text("Poland"));
+        expectedPoland.put(new Text("ISO 3166-2"), new Text("PL"));
+        expectedPoland.put(new Text("ISO 3166-3"), new Text("POL"));
+        expectedPoland.put(new Text("ISO Numeric"), new Text("616"));
+
+        mapDriver
+                .withInput(
+                        new LongWritable(0),
+                        new Text(
+                                "Country name;ISO 3166-2;ISO 3166-3;ISO Numeric;Linked to country;Synonym1;Synonym2;Synonym3"))
+                .withInput(new LongWritable(44), new Text("Poland;PL;POL;616;"));
+
+        List<Pair<LongWritable, SortedMapWritable>> actualOutputs = mapDriver.run();
+
+        Assert.assertEquals(1, actualOutputs.size());
+
+        Pair<LongWritable, SortedMapWritable> actualOutputPoland = actualOutputs.get(0);
+        Assert.assertEquals(new LongWritable(44), actualOutputPoland.getFirst());
+        Assert.assertEquals(expectedPoland.get(new Text("Country name")),
+                actualOutputPoland.getSecond().get(new Text("Country name")));
+        Assert.assertEquals(expectedPoland.get(new Text("ISO 3166-2")),
+                actualOutputPoland.getSecond().get(new Text("ISO 3166-2")));
+        Assert.assertEquals(expectedPoland.get(new Text("ISO 3166-3")),
+                actualOutputPoland.getSecond().get(new Text("ISO 3166-3")));
+        Assert.assertEquals(expectedPoland.get(new Text("ISO Numeric")),
+                actualOutputPoland.getSecond().get(new Text("ISO Numeric")));
     }
 
     @Test
