@@ -52,7 +52,6 @@ import org.eobjects.analyzer.job.builder.AnalyzerJobBuilder;
 import org.eobjects.analyzer.job.builder.TransformerJobBuilder;
 import org.eobjects.hadoopdatacleaner.FlatFileTool;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
-import org.eobjects.hadoopdatacleaner.datastores.CsvParser;
 import org.eobjects.metamodel.csv.CsvConfiguration;
 import org.eobjects.metamodel.util.FileResource;
 import org.junit.Before;
