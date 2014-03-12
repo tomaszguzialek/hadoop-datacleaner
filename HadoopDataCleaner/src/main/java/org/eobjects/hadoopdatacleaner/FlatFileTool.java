@@ -25,8 +25,8 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.SortedMapWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -81,7 +81,7 @@ public final class FlatFileTool extends HadoopDataCleanerTool implements Tool {
 		job.setMapperClass(FlatFileMapper.class);
 		job.setReducerClass(FlatFileReducer.class);
 
-		job.setMapOutputKeyClass(LongWritable.class);
+		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(SortedMapWritable.class);
 		
 		job.setNumReduceTasks(1);

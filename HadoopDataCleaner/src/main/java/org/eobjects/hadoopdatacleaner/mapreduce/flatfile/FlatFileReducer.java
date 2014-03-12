@@ -22,51 +22,63 @@ package org.eobjects.hadoopdatacleaner.mapreduce.flatfile;
 import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.eobjects.analyzer.beans.api.Analyzer;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
+import org.eobjects.analyzer.data.InputRow;
 import org.eobjects.analyzer.job.AnalysisJob;
+import org.eobjects.analyzer.result.AnalyzerResult;
 import org.eobjects.hadoopdatacleaner.FlatFileTool;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.datastores.CsvParser;
+import org.eobjects.hadoopdatacleaner.datastores.RowUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FlatFileReducer extends Reducer<LongWritable, SortedMapWritable, NullWritable, Text> {
+public class FlatFileReducer extends Reducer<Text, SortedMapWritable, NullWritable, Text> {
 
-    @SuppressWarnings("unused")
     private static final Logger logger = LoggerFactory.getLogger(FlatFileReducer.class);
-    
+
     private AnalyzerBeansConfiguration analyzerBeansConfiguration;
 
     private AnalysisJob analysisJob;
-    
-    protected void setup(Reducer<LongWritable, SortedMapWritable, NullWritable, Text>.Context context)
-            throws IOException, InterruptedException {
+
+    protected void setup(Reducer<Text, SortedMapWritable, NullWritable, Text>.Context context) throws IOException,
+            InterruptedException {
         Configuration mapReduceConfiguration = context.getConfiguration();
         String datastoresConfigurationLines = mapReduceConfiguration
                 .get(FlatFileTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY);
         String analysisJobXml = mapReduceConfiguration.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
-        analyzerBeansConfiguration = ConfigurationSerializer.deserializeAnalyzerBeansDatastores(datastoresConfigurationLines);
+        analyzerBeansConfiguration = ConfigurationSerializer
+                .deserializeAnalyzerBeansDatastores(datastoresConfigurationLines);
         analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
         super.setup(context);
     }
-    
+
     @Override
-    public void reduce(LongWritable key, Iterable<SortedMapWritable> rows, Context context) throws IOException,
+    public void reduce(Text analyzerKey, Iterable<SortedMapWritable> rows, Context context) throws IOException,
             InterruptedException {
-        
-//        Collection<AnalyzerJob> analyzerJobs = analysisJob.getAnalyzerJobs();
-        
-//        for (AnalyzerJob analyzerJob : analyzerJobs) {
-//            analyzerJob.
-//        }
-        
-        Text finalText = CsvParser.toCsvText(rows);
-        context.write(NullWritable.get(), finalText);
+
+        Analyzer<?> analyzer = ConfigurationSerializer.initializeAnalyzer(analyzerKey.toString(),
+                analyzerBeansConfiguration, analysisJob);
+
+        logger.info("analyzerKey = " + analyzerKey.toString() + " rows: ");
+        for (SortedMapWritable rowWritable : rows) {
+            InputRow inputRow = RowUtils.sortedMapWritableToInputRow(rowWritable, analysisJob.getSourceColumns());
+            analyzer.run(inputRow, 1);
+
+            RowUtils.printSortedMapWritable(rowWritable, logger);
+
+            Text finalText = CsvParser.toCsvText(rowWritable);
+            context.write(NullWritable.get(), finalText);
+        }
+        logger.info("end of analyzerKey = " + analyzerKey.toString() + " rows.");
+
+        AnalyzerResult analyzerResult = analyzer.getResult();
+        logger.debug("analyzerResult.toString(): " + analyzerResult.toString());
     }
 
 }

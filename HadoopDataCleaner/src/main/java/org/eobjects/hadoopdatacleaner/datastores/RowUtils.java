@@ -50,7 +50,17 @@ public class RowUtils {
             logger.info("\t" + Bytes.toString(family) + ":" + Bytes.toString(column) + " = " + Bytes.toString(value));
         }
     }
-    
+
+    public static void printSortedMapWritable(SortedMapWritable row, Logger logger) {
+        logger.info("Row: ");
+        for (@SuppressWarnings("rawtypes")
+        Map.Entry<WritableComparable, Writable> entry : row.entrySet()) {
+            Text columnName = (Text) entry.getKey();
+            Text columnValue = (Text) entry.getValue();
+            logger.info("\t" + columnName + " = " + columnValue);
+        }
+    }
+
     public static Put preparePut(Result result) {
         Put put = new Put(result.getRow());
         for (KeyValue keyValue : result.raw()) {
@@ -62,7 +72,7 @@ public class RowUtils {
         }
         return put;
     }
-    
+
     public static SortedMapWritable inputRowToSortedMapWritable(InputRow inputRow) {
         SortedMapWritable rowWritable = new SortedMapWritable();
         for (InputColumn<?> inputColumn : inputRow.getInputColumns()) {
@@ -72,8 +82,9 @@ public class RowUtils {
         }
         return rowWritable;
     }
-    
-    public static InputRow sortedMapWritableToInputRow(SortedMapWritable rowWritable, Collection<InputColumn<?>> sourceColumns) {
+
+    public static InputRow sortedMapWritableToInputRow(SortedMapWritable rowWritable,
+            Collection<InputColumn<?>> sourceColumns) {
         MockInputRow inputRow = new MockInputRow();
 
         for (@SuppressWarnings("rawtypes")
@@ -88,10 +99,10 @@ public class RowUtils {
                 }
             }
         }
-        
+
         return inputRow;
     }
-    
+
     public static Result sortedMapWritableToResult(SortedMapWritable row) {
         List<KeyValue> keyValues = new ArrayList<KeyValue>();
         for (@SuppressWarnings("rawtypes")

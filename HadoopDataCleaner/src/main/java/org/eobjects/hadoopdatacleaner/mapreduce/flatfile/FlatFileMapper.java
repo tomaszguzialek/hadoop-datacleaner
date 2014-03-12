@@ -30,7 +30,9 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.data.InputRow;
 import org.eobjects.analyzer.job.AnalysisJob;
+import org.eobjects.analyzer.job.AnalyzerJob;
 import org.eobjects.analyzer.job.runner.ConsumeRowHandler;
+import org.eobjects.analyzer.util.LabelUtils;
 import org.eobjects.hadoopdatacleaner.FlatFileTool;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.datastores.CsvParser;
@@ -38,7 +40,7 @@ import org.eobjects.hadoopdatacleaner.datastores.RowUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, SortedMapWritable> {
+public class FlatFileMapper extends Mapper<LongWritable, Text, Text, SortedMapWritable> {
 
     @SuppressWarnings("unused")
     private static final Logger logger = LoggerFactory.getLogger(FlatFileMapper.class);
@@ -49,7 +51,7 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
 
     private CsvParser csvParser;
 
-    protected void setup(Mapper<LongWritable, Text, LongWritable, SortedMapWritable>.Context context)
+    protected void setup(Mapper<LongWritable, Text, Text, SortedMapWritable>.Context context)
             throws IOException, InterruptedException {
         Configuration mapReduceConfiguration = context.getConfiguration();
         String datastoresConfigurationLines = mapReduceConfiguration
@@ -74,7 +76,9 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, LongWritable, Sor
 
         for (InputRow transformedRow : transformedRows) {
             SortedMapWritable rowWritable = RowUtils.inputRowToSortedMapWritable(transformedRow);
-            context.write(key, rowWritable);
+            for (AnalyzerJob analyzerJob : analysisJob.getAnalyzerJobs()) {
+                context.write(new Text(LabelUtils.getLabel(analyzerJob)), rowWritable);
+            }
         }
     }
 }

@@ -35,7 +35,7 @@ import org.eobjects.analyzer.data.MockInputRow;
 public class CsvParser {
 
     private Collection<InputColumn<?>> jobColumns;
-    
+
     private Collection<Boolean> usedColumns;
 
     private String delimiter;
@@ -43,7 +43,7 @@ public class CsvParser {
     public CsvParser(Collection<InputColumn<?>> jobColumns) {
         this(jobColumns, ",");
     }
-    
+
     public CsvParser(Collection<InputColumn<?>> jobColumns, String delimiter) {
         this.jobColumns = jobColumns;
         this.delimiter = delimiter;
@@ -74,7 +74,7 @@ public class CsvParser {
     public InputRow prepareRow(Text csvLine) {
         if (usedColumns == null)
             parseHeaderRow(csvLine);
-        
+
         String[] values = csvLine.toString().split(";");
 
         Iterator<InputColumn<?>> jobColumnsIterator = jobColumns.iterator();
@@ -90,19 +90,17 @@ public class CsvParser {
         }
         return row;
     }
-    
-    public static Text toCsvText(Iterable<SortedMapWritable> rows) {
+
+    public static Text toCsvText(SortedMapWritable row) {
         Text finalText = new Text();
-        for (SortedMapWritable row : rows) {
-            for (@SuppressWarnings("rawtypes")
-            Iterator<Entry<WritableComparable, Writable>> iterator = row.entrySet().iterator(); iterator.hasNext();) {
-                Text value = ((Text) iterator.next().getValue());
-                finalText.set(finalText.toString() + value.toString());
-                if (iterator.hasNext())
-                    finalText.set(finalText.toString() + ";");
-                else
-                    finalText.set(finalText.toString());
-            }
+        for (@SuppressWarnings("rawtypes")
+        Iterator<Entry<WritableComparable, Writable>> iterator = row.entrySet().iterator(); iterator.hasNext();) {
+            Text value = ((Text) iterator.next().getValue());
+            finalText.set(finalText.toString() + value.toString());
+            if (iterator.hasNext())
+                finalText.set(finalText.toString() + ";");
+            else
+                finalText.set(finalText.toString());
         }
         return finalText;
     }
