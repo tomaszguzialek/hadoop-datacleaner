@@ -109,10 +109,17 @@ public class SampleHBaseConfiguration {
             AnalyzerJobBuilder<StringAnalyzer> stringAnalyzer = ajb.addAnalyzer(StringAnalyzer.class);
             stringAnalyzer.addInputColumn(ajb.getSourceColumnByName("mainFamily:iso3"));
 
+            AnalyzerJobBuilder<InsertIntoTableAnalyzer> insertInto = ajb.addAnalyzer(InsertIntoTableAnalyzer.class);
+            insertInto.setConfiguredProperty("Column names", new String[] { "mainFamily:iso2" });
+            insertInto.setConfiguredProperty("Table name", "countrycodes_output");
+            insertInto.setConfiguredProperty("Schema name", "countrycodes_schema");
+            insertInto.setConfiguredProperty("Datastore",
+                    configuration.getDatastoreCatalog().getDatastore("countrycodes_hbase"));
+            insertInto.addInputColumn(concatenator.getOutputColumns().get(0));
+
             return ajb.toAnalysisJob();
         } finally {
             ajb.close();
         }
     }
-
 }
