@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eobjects.analyzer.beans.StringAnalyzer;
+import org.eobjects.analyzer.beans.filter.EqualsFilter;
+import org.eobjects.analyzer.beans.filter.ValidationCategory;
 import org.eobjects.analyzer.beans.transform.ConcatenatorTransformer;
 import org.eobjects.analyzer.beans.transform.TokenizerTransformer;
 import org.eobjects.analyzer.beans.valuedist.ValueDistributionAnalyzer;
@@ -38,6 +40,7 @@ import org.eobjects.analyzer.descriptors.SimpleDescriptorProvider;
 import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.analyzer.job.builder.AnalysisJobBuilder;
 import org.eobjects.analyzer.job.builder.AnalyzerJobBuilder;
+import org.eobjects.analyzer.job.builder.FilterJobBuilder;
 import org.eobjects.analyzer.job.builder.TransformerJobBuilder;
 import org.eobjects.metamodel.pojo.ArrayTableDataProvider;
 import org.eobjects.metamodel.pojo.TableDataProvider;
@@ -60,6 +63,7 @@ public class SampleHBaseConfiguration {
         SimpleDescriptorProvider descriptorProvider = new SimpleDescriptorProvider(true);
         descriptorProvider.addTransformerBeanDescriptor(Descriptors.ofTransformer(ConcatenatorTransformer.class));
         descriptorProvider.addTransformerBeanDescriptor(Descriptors.ofTransformer(TokenizerTransformer.class));
+        descriptorProvider.addFilterBeanDescriptor(Descriptors.ofFilter(EqualsFilter.class));
         descriptorProvider.addAnalyzerBeanDescriptor(Descriptors.ofAnalyzer(InsertIntoTableAnalyzer.class));
         descriptorProvider.addAnalyzerBeanDescriptor(Descriptors.ofAnalyzer(StringAnalyzer.class));
 
@@ -81,6 +85,11 @@ public class SampleHBaseConfiguration {
             concatenator.addInputColumns(ajb.getSourceColumnByName("mainFamily:iso3"));
             concatenator.setConfiguredProperty("Separator", "_");
             concatenator.getOutputColumns().get(0).setName("mainFamily:iso2_iso3");
+            
+            FilterJobBuilder<EqualsFilter, ?> equalsFilter = ajb.addFilter(EqualsFilter.class);
+            equalsFilter.addInputColumn(ajb.getSourceColumnByName("mainFamily:iso2"));
+            equalsFilter.setConfiguredProperty("Column", ajb.getSourceColumnByName("mainFamily:iso2"));
+            equalsFilter.setConfiguredProperty("Values", new String[] {"PL", "DK"});
 
             // TransformerJobBuilder<TokenizerTransformer> tokenizer =
             // ajb.addTransformer(TokenizerTransformer.class);
@@ -94,10 +103,12 @@ public class SampleHBaseConfiguration {
 
             AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer = ajb
                     .addAnalyzer(ValueDistributionAnalyzer.class);
+            valueDistributionAnalyzer.setRequirement(equalsFilter.getOutcome(ValidationCategory.INVALID));
             valueDistributionAnalyzer.addInputColumn(ajb.getSourceColumnByName("mainFamily:country_name"));
 
             AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer2 = ajb
                     .addAnalyzer(ValueDistributionAnalyzer.class);
+            valueDistributionAnalyzer2.setRequirement(equalsFilter.getOutcome(ValidationCategory.VALID));
             valueDistributionAnalyzer2.addInputColumn(ajb.getSourceColumnByName("mainFamily:iso2"));
 
             // AnalyzerJobBuilder<ValueDistributionAnalyzer>
@@ -107,6 +118,7 @@ public class SampleHBaseConfiguration {
             // valueDistributionAnalyzer3.addInputColumn(ajb.getSourceColumnByName("mainFamily:iso2"));
 
             AnalyzerJobBuilder<StringAnalyzer> stringAnalyzer = ajb.addAnalyzer(StringAnalyzer.class);
+            stringAnalyzer.setRequirement(equalsFilter.getOutcome(ValidationCategory.VALID));
             stringAnalyzer.addInputColumn(ajb.getSourceColumnByName("mainFamily:iso3"));
 
             AnalyzerJobBuilder<InsertIntoTableAnalyzer> insertInto = ajb.addAnalyzer(InsertIntoTableAnalyzer.class);
@@ -115,6 +127,7 @@ public class SampleHBaseConfiguration {
             insertInto.setConfiguredProperty("Schema name", "countrycodes_schema");
             insertInto.setConfiguredProperty("Datastore",
                     configuration.getDatastoreCatalog().getDatastore("countrycodes_hbase"));
+            insertInto.setRequirement(equalsFilter.getOutcome(ValidationCategory.INVALID));
             insertInto.addInputColumn(concatenator.getOutputColumns().get(0));
 
             return ajb.toAnalysisJob();

@@ -29,6 +29,7 @@ import java.util.Map;
 
 import org.eobjects.analyzer.beans.StringAnalyzer;
 import org.eobjects.analyzer.beans.api.Analyzer;
+import org.eobjects.analyzer.beans.filter.EqualsFilter;
 import org.eobjects.analyzer.beans.transform.ConcatenatorTransformer;
 import org.eobjects.analyzer.beans.transform.TokenizerTransformer;
 import org.eobjects.analyzer.beans.valuedist.ValueDistributionAnalyzer;
@@ -103,6 +104,7 @@ public class ConfigurationSerializer {
         SimpleDescriptorProvider descriptorProvider = new SimpleDescriptorProvider(true);
         descriptorProvider.addTransformerBeanDescriptor(Descriptors.ofTransformer(ConcatenatorTransformer.class));
         descriptorProvider.addTransformerBeanDescriptor(Descriptors.ofTransformer(TokenizerTransformer.class));
+        descriptorProvider.addFilterBeanDescriptor(Descriptors.ofFilter(EqualsFilter.class));
         descriptorProvider.addAnalyzerBeanDescriptor(Descriptors.ofAnalyzer(InsertIntoTableAnalyzer.class));
         descriptorProvider.addAnalyzerBeanDescriptor(Descriptors.ofAnalyzer(StringAnalyzer.class));
         descriptorProvider.addAnalyzerBeanDescriptor(Descriptors.ofAnalyzer(ValueDistributionAnalyzer.class));

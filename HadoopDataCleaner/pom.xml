@@ -13,7 +13,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<hadoop.version>2.0.0-cdh4.5.0</hadoop.version>
-		<analyzerbeans.version>0.38</analyzerbeans.version>
+		<analyzerbeans.version>0.40</analyzerbeans.version>
 	</properties>
 
 	<repositories>
@@ -28,6 +28,16 @@
 			</snapshots>
 		</repository>
 	</repositories>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>16.0.1</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<dependencies>
 		<dependency>
@@ -48,6 +58,10 @@
 				<exclusion>
 					<groupId>org.slf4j</groupId>
 					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>google-collections</groupId>
+					<artifactId>google-collections</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -70,6 +84,11 @@
 		<dependency>
 			<groupId>org.eobjects.analyzerbeans</groupId>
 			<artifactId>AnalyzerBeans-basic-transformers</artifactId>
+			<version>${analyzerbeans.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.eobjects.analyzerbeans</groupId>
+			<artifactId>AnalyzerBeans-basic-filters</artifactId>
 			<version>${analyzerbeans.version}</version>
 		</dependency>
 		<dependency>

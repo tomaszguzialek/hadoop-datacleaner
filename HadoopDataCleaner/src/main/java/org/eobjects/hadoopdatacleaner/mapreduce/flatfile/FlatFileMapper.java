@@ -20,7 +20,6 @@
 package org.eobjects.hadoopdatacleaner.mapreduce.flatfile;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
@@ -30,13 +29,12 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.data.InputRow;
 import org.eobjects.analyzer.job.AnalysisJob;
-import org.eobjects.analyzer.job.AnalyzerJob;
 import org.eobjects.analyzer.job.runner.ConsumeRowHandler;
-import org.eobjects.analyzer.util.LabelUtils;
+import org.eobjects.analyzer.job.runner.ConsumeRowResult;
 import org.eobjects.hadoopdatacleaner.FlatFileTool;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.datastores.CsvParser;
-import org.eobjects.hadoopdatacleaner.datastores.RowUtils;
+import org.eobjects.hadoopdatacleaner.mapreduce.MapperEmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,20 +63,23 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, Text, SortedMapWr
     }
 
     @Override
-    public void map(LongWritable key, Text csvLine, Context context) throws IOException, InterruptedException {
+    public void map(LongWritable key, Text csvLine, final Context context) throws IOException, InterruptedException {
         InputRow inputRow = csvParser.prepareRow(csvLine);
 
         ConsumeRowHandler.Configuration configuration = new ConsumeRowHandler.Configuration();
         configuration.includeAnalyzers = false;
         ConsumeRowHandler consumeRowHandler = new ConsumeRowHandler(analysisJob, analyzerBeansConfiguration,
                 configuration);
-        List<InputRow> transformedRows = consumeRowHandler.consume(inputRow);
+        ConsumeRowResult consumeRowResult = consumeRowHandler.consumeRow(inputRow);
 
-        for (InputRow transformedRow : transformedRows) {
-            SortedMapWritable rowWritable = RowUtils.inputRowToSortedMapWritable(transformedRow);
-            for (AnalyzerJob analyzerJob : analysisJob.getAnalyzerJobs()) {
-                context.write(new Text(LabelUtils.getLabel(analyzerJob)), rowWritable);
+        MapperEmitter mapperEmitter = new MapperEmitter(new MapperEmitter.Callback() {
+            
+            @Override
+            public void write(Text key, SortedMapWritable row) throws IOException, InterruptedException {
+                context.write(key, row);
+                
             }
-        }
+        });
+        mapperEmitter.emit(consumeRowResult, analysisJob.getAnalyzerJobs());
     }
 }
