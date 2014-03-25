@@ -61,7 +61,7 @@ import org.eobjects.metamodel.util.SimpleTableDef;
 import org.junit.Before;
 import org.junit.Test;
 
-public class HBaseMapperTest {
+public class HBaseTableMapperTest {
 
     MapDriver<ImmutableBytesWritable, Result, Text, SortedMapWritable> mapDriver;
     

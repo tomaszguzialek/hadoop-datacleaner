@@ -56,7 +56,7 @@ public class FlatFileToolIntegrationTest {
         AnalysisJob analysisJob = buildAnalysisJob(analyzerBeansConfiguration, args[0]);
         flatFileTool = new FlatFileTool(analyzerBeansConfiguration, analysisJob);
         int exitCode = ToolRunner.run(flatFileTool, args);
-        Assert.assertEquals(0, exitCode);
+        Assert.assertEquals("The exit code of the FlatFileTool should be 0.", 0, exitCode);
     }
 
     public static AnalyzerBeansConfiguration buildAnalyzerBeansConfigurationLocalFS(String csvFilePath) {
