@@ -31,10 +31,10 @@ import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.data.InputRow;
 import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.analyzer.result.AnalyzerResult;
-import org.eobjects.hadoopdatacleaner.FlatFileTool;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.datastores.CsvParser;
 import org.eobjects.hadoopdatacleaner.datastores.RowUtils;
+import org.eobjects.hadoopdatacleaner.tools.FlatFileTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

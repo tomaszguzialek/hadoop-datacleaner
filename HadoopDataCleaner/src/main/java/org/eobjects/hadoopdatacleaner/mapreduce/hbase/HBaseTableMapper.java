@@ -27,28 +27,23 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
-import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.data.InputRow;
-import org.eobjects.analyzer.job.AnalysisJob;
-import org.eobjects.analyzer.job.runner.ConsumeRowHandler;
-import org.eobjects.analyzer.job.runner.ConsumeRowResult;
-import org.eobjects.hadoopdatacleaner.FlatFileTool;
-import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.datastores.HBaseParser;
-import org.eobjects.hadoopdatacleaner.datastores.RowUtils;
+import org.eobjects.hadoopdatacleaner.mapreduce.MapperDelegate;
 import org.eobjects.hadoopdatacleaner.mapreduce.MapperEmitter;
+import org.eobjects.hadoopdatacleaner.mapreduce.MapperEmitter.Callback;
+import org.eobjects.hadoopdatacleaner.tools.FlatFileTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class HBaseTableMapper extends TableMapper</* KEYOUT */Text, /* VALUEOUT */SortedMapWritable> {
 
+    @SuppressWarnings("unused")
     private static final Logger logger = LoggerFactory.getLogger(HBaseTableMapper.class);
 
-    private AnalyzerBeansConfiguration analyzerBeansConfiguration;
-
-    private AnalysisJob analysisJob;
-
     private HBaseParser hBaseParser;
+
+    private MapperDelegate mapperDelegate;
 
     @Override
     protected void setup(
@@ -58,10 +53,8 @@ public class HBaseTableMapper extends TableMapper</* KEYOUT */Text, /* VALUEOUT 
         String datastoresConfigurationLines = mapReduceConfiguration
                 .get(FlatFileTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY);
         String analysisJobXml = mapReduceConfiguration.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
-        analyzerBeansConfiguration = ConfigurationSerializer
-                .deserializeAnalyzerBeansDatastores(datastoresConfigurationLines);
-        analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
-        hBaseParser = new HBaseParser(analysisJob.getSourceColumns());
+        mapperDelegate = new MapperDelegate(datastoresConfigurationLines, analysisJobXml);
+        hBaseParser = new HBaseParser(mapperDelegate.getAnalysisJob().getSourceColumns());
         super.setup(context);
     }
 
@@ -70,21 +63,14 @@ public class HBaseTableMapper extends TableMapper</* KEYOUT */Text, /* VALUEOUT 
 
         InputRow inputRow = hBaseParser.prepareRow(result);
 
-        ConsumeRowHandler.Configuration configuration = new ConsumeRowHandler.Configuration();
-        configuration.includeAnalyzers = false;
-        ConsumeRowHandler consumeRowHandler = new ConsumeRowHandler(analysisJob, analyzerBeansConfiguration,
-                configuration);
-        ConsumeRowResult consumeRowResult = consumeRowHandler.consumeRow(inputRow);
-
-        MapperEmitter mapperEmitter = new MapperEmitter(new MapperEmitter.Callback() {
+        Callback mapperEmitterCallback = new MapperEmitter.Callback() {
             @Override
             public void write(Text key, SortedMapWritable row) throws IOException, InterruptedException {
                 context.write(key, row);
             }
-        });
-        mapperEmitter.emit(consumeRowResult, analysisJob.getAnalyzerJobs());
-
-        RowUtils.printResult(result, logger);
+        };
+        
+        mapperDelegate.run(inputRow, mapperEmitterCallback);
     }
 
 }

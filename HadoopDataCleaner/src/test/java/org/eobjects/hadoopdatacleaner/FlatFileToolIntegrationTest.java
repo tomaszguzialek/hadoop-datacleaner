@@ -39,6 +39,7 @@ import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.analyzer.job.builder.AnalysisJobBuilder;
 import org.eobjects.analyzer.job.builder.AnalyzerJobBuilder;
 import org.eobjects.analyzer.job.builder.TransformerJobBuilder;
+import org.eobjects.hadoopdatacleaner.tools.FlatFileTool;
 import org.eobjects.metamodel.csv.CsvConfiguration;
 import org.eobjects.metamodel.util.FileResource;
 import org.junit.Test;

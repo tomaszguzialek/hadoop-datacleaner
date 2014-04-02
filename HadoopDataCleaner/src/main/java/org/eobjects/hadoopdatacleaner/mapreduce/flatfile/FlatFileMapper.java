@@ -26,15 +26,12 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.data.InputRow;
-import org.eobjects.analyzer.job.AnalysisJob;
-import org.eobjects.analyzer.job.runner.ConsumeRowHandler;
-import org.eobjects.analyzer.job.runner.ConsumeRowResult;
-import org.eobjects.hadoopdatacleaner.FlatFileTool;
-import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.datastores.CsvParser;
+import org.eobjects.hadoopdatacleaner.mapreduce.MapperDelegate;
 import org.eobjects.hadoopdatacleaner.mapreduce.MapperEmitter;
+import org.eobjects.hadoopdatacleaner.mapreduce.MapperEmitter.Callback;
+import org.eobjects.hadoopdatacleaner.tools.FlatFileTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,22 +40,18 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, Text, SortedMapWr
     @SuppressWarnings("unused")
     private static final Logger logger = LoggerFactory.getLogger(FlatFileMapper.class);
 
-    private AnalyzerBeansConfiguration analyzerBeansConfiguration;
-
-    private AnalysisJob analysisJob;
-
     private CsvParser csvParser;
 
-    protected void setup(Mapper<LongWritable, Text, Text, SortedMapWritable>.Context context)
-            throws IOException, InterruptedException {
+    private MapperDelegate mapperDelegate;
+
+    protected void setup(Mapper<LongWritable, Text, Text, SortedMapWritable>.Context context) throws IOException,
+            InterruptedException {
         Configuration mapReduceConfiguration = context.getConfiguration();
         String datastoresConfigurationLines = mapReduceConfiguration
                 .get(FlatFileTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY);
         String analysisJobXml = mapReduceConfiguration.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
-        analyzerBeansConfiguration = ConfigurationSerializer
-                .deserializeAnalyzerBeansDatastores(datastoresConfigurationLines);
-        analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
-        csvParser = new CsvParser(analysisJob.getSourceColumns(), ";");
+        this.mapperDelegate = new MapperDelegate(datastoresConfigurationLines, analysisJobXml);
+        csvParser = new CsvParser(mapperDelegate.getAnalysisJob().getSourceColumns(), ";");
         super.setup(context);
     }
 
@@ -66,20 +59,15 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, Text, SortedMapWr
     public void map(LongWritable key, Text csvLine, final Context context) throws IOException, InterruptedException {
         InputRow inputRow = csvParser.prepareRow(csvLine);
 
-        ConsumeRowHandler.Configuration configuration = new ConsumeRowHandler.Configuration();
-        configuration.includeAnalyzers = false;
-        ConsumeRowHandler consumeRowHandler = new ConsumeRowHandler(analysisJob, analyzerBeansConfiguration,
-                configuration);
-        ConsumeRowResult consumeRowResult = consumeRowHandler.consumeRow(inputRow);
+        Callback mapperEmitterCallback = new MapperEmitter.Callback() {
 
-        MapperEmitter mapperEmitter = new MapperEmitter(new MapperEmitter.Callback() {
-            
             @Override
             public void write(Text key, SortedMapWritable row) throws IOException, InterruptedException {
                 context.write(key, row);
-                
+
             }
-        });
-        mapperEmitter.emit(consumeRowResult, analysisJob.getAnalyzerJobs());
+        };
+        
+        mapperDelegate.run(inputRow, mapperEmitterCallback);
     }
 }

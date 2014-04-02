@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.eobjects.hadoopdatacleaner;
+package org.eobjects.hadoopdatacleaner.tools;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
