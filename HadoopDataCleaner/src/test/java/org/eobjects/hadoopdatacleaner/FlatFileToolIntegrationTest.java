@@ -40,8 +40,8 @@ import org.eobjects.analyzer.job.builder.AnalysisJobBuilder;
 import org.eobjects.analyzer.job.builder.AnalyzerJobBuilder;
 import org.eobjects.analyzer.job.builder.TransformerJobBuilder;
 import org.eobjects.hadoopdatacleaner.tools.FlatFileTool;
-import org.eobjects.metamodel.csv.CsvConfiguration;
-import org.eobjects.metamodel.util.FileResource;
+import org.apache.metamodel.csv.CsvConfiguration;
+import org.apache.metamodel.util.FileResource;
 import org.junit.Test;
 
 public class FlatFileToolIntegrationTest {
@@ -79,25 +79,25 @@ public class FlatFileToolIntegrationTest {
         AnalysisJobBuilder ajb = new AnalysisJobBuilder(configuration);
         try {
             ajb.setDatastore(datastoreName);
-            ajb.addSourceColumns("countrycodes.csv.countrycodes.Country name",
-                    "countrycodes.csv.countrycodes.ISO 3166-2", "countrycodes.csv.countrycodes.ISO 3166-3",
-                    "countrycodes.csv.countrycodes.Synonym3");
+            ajb.addSourceColumns("resources.countrycodes.csv.Country name",
+                    "resources.countrycodes.csv.ISO 3166-2", "resources.countrycodes.csv.ISO 3166-3",
+                    "resources.countrycodes.csv.Synonym3");
 
             TransformerJobBuilder<ConcatenatorTransformer> concatenator = ajb
                     .addTransformer(ConcatenatorTransformer.class);
-            concatenator.addInputColumns(ajb.getSourceColumnByName("countrycodes.csv.countrycodes.ISO 3166-2"));
-            concatenator.addInputColumns(ajb.getSourceColumnByName("countrycodes.csv.countrycodes.ISO 3166-3"));
+            concatenator.addInputColumns(ajb.getSourceColumnByName("resources.countrycodes.csv.ISO 3166-2"));
+            concatenator.addInputColumns(ajb.getSourceColumnByName("resources.countrycodes.csv.ISO 3166-3"));
             concatenator.setConfiguredProperty("Separator", "_");
 
             AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer = ajb
                     .addAnalyzer(ValueDistributionAnalyzer.class);
             valueDistributionAnalyzer.addInputColumn(ajb
-                    .getSourceColumnByName("countrycodes.csv.countrycodes.Country name"));
+                    .getSourceColumnByName("resources.countrycodes.csv.Country name"));
 
             AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer2 = ajb
                     .addAnalyzer(ValueDistributionAnalyzer.class);
             valueDistributionAnalyzer2.addInputColumn(ajb
-                    .getSourceColumnByName("countrycodes.csv.countrycodes.ISO 3166-2"));
+                    .getSourceColumnByName("resources.countrycodes.csv.ISO 3166-2"));
 
             return ajb.toAnalysisJob();
         } finally {
