@@ -14,7 +14,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<hadoop.version>2.0.0-cdh4.5.0</hadoop.version>
 		<cassandra.version>2.0.6</cassandra.version>
-		<analyzerbeans.version>1.0-SNAPSHOT</analyzerbeans.version>
+		<analyzerbeans.version>0.41</analyzerbeans.version>
 	</properties>
 
 	<repositories>

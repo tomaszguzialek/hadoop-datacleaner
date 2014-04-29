@@ -41,9 +41,9 @@ import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.analyzer.job.builder.AnalysisJobBuilder;
 import org.eobjects.analyzer.job.builder.AnalyzerJobBuilder;
 import org.eobjects.analyzer.job.builder.TransformerJobBuilder;
-import org.apache.metamodel.csv.CsvConfiguration;
-import org.apache.metamodel.util.FileResource;
-import org.apache.metamodel.util.UrlResource;
+import org.eobjects.metamodel.csv.CsvConfiguration;
+import org.eobjects.metamodel.util.FileResource;
+import org.eobjects.metamodel.util.UrlResource;
 
 public class SampleCsvConfiguration {
 
@@ -114,18 +114,14 @@ public class SampleCsvConfiguration {
         AnalysisJobBuilder ajb = new AnalysisJobBuilder(configuration);
         try {
             ajb.setDatastore(_csvFilePath);
-            String filename = _csvFilePath.substring(_csvFilePath.lastIndexOf('/') + 1);
-            String pathWithoutFilename = _csvFilePath.substring(0, _csvFilePath.lastIndexOf('/'));
-            String directory = pathWithoutFilename.substring(pathWithoutFilename.lastIndexOf('/') + 1);
-            String prefix = directory + "." + filename + ".";
-            ajb.addSourceColumns(prefix + "Country name",
-                    prefix + "ISO 3166-2", prefix + "ISO 3166-3",
-                    prefix + "Synonym3");
+            ajb.addSourceColumns("countrycodes.csv.countrycodes.Country name",
+                    "countrycodes.csv.countrycodes.ISO 3166-2", "countrycodes.csv.countrycodes.ISO 3166-3",
+                    "countrycodes.csv.countrycodes.Synonym3");
 
             TransformerJobBuilder<ConcatenatorTransformer> concatenator = ajb
                     .addTransformer(ConcatenatorTransformer.class);
-            concatenator.addInputColumns(ajb.getSourceColumnByName(prefix + "ISO 3166-2"));
-            concatenator.addInputColumns(ajb.getSourceColumnByName(prefix + "ISO 3166-3"));
+            concatenator.addInputColumns(ajb.getSourceColumnByName("countrycodes.csv.countrycodes.ISO 3166-2"));
+            concatenator.addInputColumns(ajb.getSourceColumnByName("countrycodes.csv.countrycodes.ISO 3166-3"));
             concatenator.setConfiguredProperty("Separator", "_");
 
             // TransformerJobBuilder<TokenizerTransformer> tokenizer =
@@ -141,12 +137,12 @@ public class SampleCsvConfiguration {
             AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer = ajb
                     .addAnalyzer(ValueDistributionAnalyzer.class);
             valueDistributionAnalyzer.addInputColumn(ajb
-                    .getSourceColumnByName(prefix + "Country name"));
+                    .getSourceColumnByName("countrycodes.csv.countrycodes.Country name"));
             
             AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer2 = ajb
                     .addAnalyzer(ValueDistributionAnalyzer.class);
             valueDistributionAnalyzer2.addInputColumn(ajb
-                    .getSourceColumnByName(prefix + "ISO 3166-2"));
+                    .getSourceColumnByName("countrycodes.csv.countrycodes.ISO 3166-2"));
 
             return ajb.toAnalysisJob();
         } finally {

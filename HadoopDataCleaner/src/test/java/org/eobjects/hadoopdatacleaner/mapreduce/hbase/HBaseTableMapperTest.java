@@ -55,9 +55,9 @@ import org.eobjects.analyzer.job.builder.AnalyzerJobBuilder;
 import org.eobjects.analyzer.job.builder.TransformerJobBuilder;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.tools.HBaseTool;
-import org.apache.metamodel.pojo.ArrayTableDataProvider;
-import org.apache.metamodel.pojo.TableDataProvider;
-import org.apache.metamodel.util.SimpleTableDef;
+import org.eobjects.metamodel.pojo.ArrayTableDataProvider;
+import org.eobjects.metamodel.pojo.TableDataProvider;
+import org.eobjects.metamodel.util.SimpleTableDef;
 import org.junit.Before;
 import org.junit.Test;
 
