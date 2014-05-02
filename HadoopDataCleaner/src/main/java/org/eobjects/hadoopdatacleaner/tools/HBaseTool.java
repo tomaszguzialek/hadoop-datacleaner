@@ -19,8 +19,10 @@
  */
 package org.eobjects.hadoopdatacleaner.tools;
 
+import java.io.File;
 import java.io.IOException;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Scan;
@@ -41,15 +43,19 @@ public final class HBaseTool extends HadoopDataCleanerTool implements Tool {
     public HBaseTool(AnalyzerBeansConfiguration analyzerBeansConfiguration, AnalysisJob analysisJob) {
         super(analyzerBeansConfiguration, analysisJob);
     }
+    
+    public HBaseTool(AnalyzerBeansConfiguration analyzerBeansConfiguration, String analysisJobXml) throws IOException {
+        super(analyzerBeansConfiguration, analysisJobXml);
+    }
 
     @Override
     public int run(String[] args) throws Exception {
         String inputTableName, outputTableName;
-        if (args.length == 2) {
-            inputTableName = args[0];
-            outputTableName = args[1];
+        if (args.length == 3) {
+            inputTableName = args[1];
+            outputTableName = args[2];
         } else {
-            System.err.println("Incorrect number of arguments.  Expected: <inputTableName> <outputTableName>");
+            System.err.println("Incorrect number of arguments. Expected: <analysisJobPath> <inputTableName> <outputTableName>");
             return -1;
         }
 
@@ -90,10 +96,18 @@ public final class HBaseTool extends HadoopDataCleanerTool implements Tool {
     }
 
     public static void main(String[] args) throws Exception {
-        AnalyzerBeansConfiguration analyzerBeansConfiguration = SampleHBaseConfiguration.buildAnalyzerBeansConfiguration();
-        AnalysisJob analysisJob = SampleHBaseConfiguration.buildAnalysisJob(analyzerBeansConfiguration);
-        HBaseTool hBaseTool = new HBaseTool(analyzerBeansConfiguration, analysisJob);
-        ToolRunner.run(hBaseTool, args);
+        String analysisJobPath;
+        if (args.length == 3) {
+            analysisJobPath = args[0];
+
+            AnalyzerBeansConfiguration analyzerBeansConfiguration = SampleHBaseConfiguration.buildAnalyzerBeansConfiguration();
+            String analysisJobXml = FileUtils.readFileToString(new File(analysisJobPath));
+            HBaseTool hBaseTool = new HBaseTool(analyzerBeansConfiguration, analysisJobXml);
+            ToolRunner.run(hBaseTool, args);
+        } else {
+            System.err.println("Incorrect number of arguments. Expected: <analysisJobPath> <inputTableName> <outputTableName>");
+        }
+        
     }
     
 }

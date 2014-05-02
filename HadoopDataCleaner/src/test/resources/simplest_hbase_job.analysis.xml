@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<job xmlns="http://eobjects.org/analyzerbeans/job/1.0">
+    <job-metadata>
+        <job-description>Created with DataCleaner 3.5.8</job-description>
+        <updated-date>2014-02-11-08:00</updated-date>
+    </job-metadata>
+    <source>
+        <data-context ref="countrycodes_hbase"/>
+        <columns>
+            <column type="VARCHAR" path="countrycodes_schema.countrycodes.mainFamily:country_name" id="mainFamily:country_name"/>
+            <column type="VARCHAR" path="countrycodes_schema.countrycodes.mainFamily:iso2" id="mainFamily:iso2"/>
+            <column type="VARCHAR" path="countrycodes_schema.countrycodes.mainFamily:iso3" id="mainFamily:iso3"/>
+        </columns>
+    </source>
+    <transformation>
+        <transformer>
+            <descriptor ref="Concatenator"/>
+            <properties>
+                <property value="&lt;null&gt;" name="Separator"/>
+            </properties>
+            <input ref="mainFamily:iso2"/>
+            <input value="_"/>
+            <input ref="mainFamily:iso3"/>
+            <output id="mainFamily:iso_codes" name="mainFamily:iso_codes"/>
+        </transformer>
+    </transformation>
+    <analysis>
+        <analyzer>
+            <descriptor ref="String analyzer"/>
+            <properties/>
+            <input ref="mainFamily:country_name"/>
+            <input ref="mainFamily:iso2"/>
+            <input ref="mainFamily:iso2"/>
+            <input ref="mainFamily:iso_codes"/>
+        </analyzer>
+    </analysis>
+</job>
