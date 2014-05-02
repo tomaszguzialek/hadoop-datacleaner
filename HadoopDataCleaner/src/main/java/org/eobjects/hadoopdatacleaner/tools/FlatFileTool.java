@@ -19,9 +19,11 @@
  */
 package org.eobjects.hadoopdatacleaner.tools;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -40,65 +42,77 @@ import org.eobjects.hadoopdatacleaner.mapreduce.flatfile.FlatFileReducer;
 
 public final class FlatFileTool extends HadoopDataCleanerTool implements Tool {
 
-	public FlatFileTool(
-			AnalyzerBeansConfiguration analyzerBeansConfiguration,
-			AnalysisJob analysisJob) throws FileNotFoundException {
+    public FlatFileTool(AnalyzerBeansConfiguration analyzerBeansConfiguration, AnalysisJob analysisJob)
+            throws FileNotFoundException {
 
-	    super(analyzerBeansConfiguration, analysisJob);
-	}
+        super(analyzerBeansConfiguration, analysisJob);
+    }
 
-	@Override
-	public int run(String[] args) throws Exception {
-		String input, output;
-		if (args.length == 2) {
-			input = args[0];
-			output = args[1];
-		} else {
-			System.err
-					.println("Incorrect number of arguments.  Expected: <input> output");
-			return -1;
-		}
+    public FlatFileTool(AnalyzerBeansConfiguration analyzerBeansConfiguration, String analysisJobXml)
+            throws IOException {
 
-		Configuration conf = getConf();
-		conf.set(ANALYSIS_JOB_XML_KEY, analysisJobXml);
-		conf.set(ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY,
-				analyzerBeansConfigurationDatastores);
+        super(analyzerBeansConfiguration, analysisJobXml);
+    }
 
-		return runMapReduceJob(input, output, conf);
-	}
+    @Override
+    public int run(String[] args) throws Exception {
+        String input, output;
+        if (args.length == 3) {
+            input = args[1];
+            output = args[2];
+        } else {
+            System.err.println("Incorrect number of arguments. Expected: <analysisJobPath> <input> output");
+            return -1;
+        }
 
-	private int runMapReduceJob(String analysisJobPath, String output,
-			Configuration mapReduceConfiguration) throws IOException,
-			InterruptedException, ClassNotFoundException {
-	    
-		Job job = Job.getInstance(mapReduceConfiguration);
-		job.setJarByClass(FlatFileMapper.class);
-		job.setJobName(this.getClass().getName());
+        Configuration conf = getConf();
+        conf.set(ANALYSIS_JOB_XML_KEY, analysisJobXml);
+        conf.set(ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY, analyzerBeansConfigurationDatastores);
 
-		FileInputFormat.setInputPaths(job, new Path(analysisJobPath));
-		FileOutputFormat.setOutputPath(job, new Path(output));
+        return runMapReduceJob(input, output, conf);
+    }
 
-		job.setMapperClass(FlatFileMapper.class);
-		job.setReducerClass(FlatFileReducer.class);
+    private int runMapReduceJob(String input, String output, Configuration mapReduceConfiguration) throws IOException,
+            InterruptedException, ClassNotFoundException {
 
-		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(SortedMapWritable.class);
-		
-		job.setNumReduceTasks(1);
-		
-		FileSystem hdfs = FileSystem.get(mapReduceConfiguration);
-		if (hdfs.exists(new Path(output)))
-			hdfs.delete(new Path(output), true);
+        Job job = Job.getInstance(mapReduceConfiguration);
+        job.setJarByClass(FlatFileMapper.class);
+        job.setJobName(this.getClass().getName());
 
-		boolean success = job.waitForCompletion(true);
-		return success ? 0 : 1;
-	}
-	
-	public static void main(String[] args) throws Exception {
-        AnalyzerBeansConfiguration analyzerBeansConfiguration = SampleCsvConfiguration.buildAnalyzerBeansConfigurationHdfs(args[0]);
-        AnalysisJob analysisJob = SampleCsvConfiguration.buildAnalysisJob(analyzerBeansConfiguration);
-        FlatFileTool hadoopDataCleanerTool = new FlatFileTool(analyzerBeansConfiguration, analysisJob);
-        ToolRunner.run(hadoopDataCleanerTool, args);
+        FileInputFormat.setInputPaths(job, new Path(input));
+        FileOutputFormat.setOutputPath(job, new Path(output));
+
+        job.setMapperClass(FlatFileMapper.class);
+        job.setReducerClass(FlatFileReducer.class);
+
+        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(SortedMapWritable.class);
+
+        job.setNumReduceTasks(1);
+
+        FileSystem hdfs = FileSystem.get(mapReduceConfiguration);
+        if (hdfs.exists(new Path(output)))
+            hdfs.delete(new Path(output), true);
+
+        boolean success = job.waitForCompletion(true);
+        return success ? 0 : 1;
+    }
+
+    public static void main(String[] args) throws Exception {
+        String analysisJobPath, input;
+        if (args.length == 3) {
+            analysisJobPath = args[0];
+            input = args[1];
+
+            AnalyzerBeansConfiguration analyzerBeansConfiguration = SampleCsvConfiguration
+                    .buildAnalyzerBeansConfiguration(input);
+            String analysisJobXml = FileUtils.readFileToString(new File(analysisJobPath));
+            FlatFileTool hadoopDataCleanerTool = new FlatFileTool(analyzerBeansConfiguration, analysisJobXml);
+            ToolRunner.run(hadoopDataCleanerTool, args);
+        } else {
+            System.err.println("Incorrect number of arguments. Expected: <analysisJobPath> <input> output");
+        }
+        
     }
 
 }

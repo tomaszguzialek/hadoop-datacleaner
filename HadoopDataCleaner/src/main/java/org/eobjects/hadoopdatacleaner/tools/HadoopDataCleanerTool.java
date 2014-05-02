@@ -19,6 +19,8 @@
  */
 package org.eobjects.hadoopdatacleaner.tools;
 
+import java.io.IOException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
@@ -39,6 +41,13 @@ public class HadoopDataCleanerTool extends Configured {
                 .serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfiguration);
         this.analysisJobXml = ConfigurationSerializer
                 .serializeAnalysisJobToXml(analyzerBeansConfiguration, analysisJob);
+    }
+    
+    public HadoopDataCleanerTool(AnalyzerBeansConfiguration analyzerBeansConfiguration, String analysisJobXml) throws IOException {
+
+        this.analyzerBeansConfigurationDatastores = ConfigurationSerializer
+                .serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfiguration);
+        this.analysisJobXml = analysisJobXml;
     }
 
     public HadoopDataCleanerTool(Configuration conf) {
