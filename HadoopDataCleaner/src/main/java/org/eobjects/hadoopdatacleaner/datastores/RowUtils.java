@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.KeyValue.SplitKeyValue;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
@@ -56,8 +57,12 @@ public class RowUtils {
         for (@SuppressWarnings("rawtypes")
         Map.Entry<WritableComparable, Writable> entry : row.entrySet()) {
             Text columnName = (Text) entry.getKey();
-            Text columnValue = (Text) entry.getValue();
-            logger.info("\t" + columnName + " = " + columnValue);
+            if (entry.getValue() instanceof Text) {
+                Text columnValue = (Text) entry.getValue();
+                logger.info("\t" + columnName + " = " + columnValue);
+            } else {
+                logger.info("\t" + columnName + " = " + null);
+            }
         }
     }
 
@@ -78,7 +83,10 @@ public class RowUtils {
         for (InputColumn<?> inputColumn : inputRow.getInputColumns()) {
             String columnName = inputColumn.getName();
             Object value = inputRow.getValue(inputColumn);
-            rowWritable.put(new Text(columnName), new Text(value.toString()));
+            if (value != null)
+                rowWritable.put(new Text(columnName), new Text(value.toString()));
+            else
+                rowWritable.put(new Text(columnName), NullWritable.get());
         }
         return rowWritable;
     }
@@ -90,12 +98,22 @@ public class RowUtils {
         for (@SuppressWarnings("rawtypes")
         Map.Entry<WritableComparable, Writable> rowEntry : rowWritable.entrySet()) {
             Text columnName = (Text) rowEntry.getKey();
-            Text columnValue = (Text) rowEntry.getValue();
-            for (InputColumn<?> sourceColumn : sourceColumns) {
-                String sourceColumnName = sourceColumn.getName();
-                if (sourceColumnName.equals(columnName.toString())) {
-                    inputRow.put(sourceColumn, columnValue.toString());
-                    break;
+            if (rowEntry.getValue() instanceof Text) {
+                Text columnValue = (Text) rowEntry.getValue();
+                for (InputColumn<?> sourceColumn : sourceColumns) {
+                    String sourceColumnName = sourceColumn.getName();
+                    if (sourceColumnName.equals(columnName.toString())) {
+                        inputRow.put(sourceColumn, columnValue.toString());
+                        break;
+                    }
+                }
+            } else {
+                for (InputColumn<?> sourceColumn : sourceColumns) {
+                    String sourceColumnName = sourceColumn.getName();
+                    if (sourceColumnName.equals(columnName.toString())) {
+                        inputRow.put(sourceColumn, null);
+                        break;
+                    }
                 }
             }
         }

@@ -95,8 +95,12 @@ public class CsvParser {
         Text finalText = new Text();
         for (@SuppressWarnings("rawtypes")
         Iterator<Entry<WritableComparable, Writable>> iterator = row.entrySet().iterator(); iterator.hasNext();) {
-            Text value = ((Text) iterator.next().getValue());
-            finalText.set(finalText.toString() + value.toString());
+            @SuppressWarnings("rawtypes")
+            Entry<WritableComparable, Writable> next = iterator.next();
+            if (next.getValue() instanceof Text) {
+                Text value = ((Text) next.getValue());
+                finalText.set(finalText.toString() + value.toString());
+            } // else do not append anything - the value is null, so empty.
             if (iterator.hasNext())
                 finalText.set(finalText.toString() + ";");
             else
