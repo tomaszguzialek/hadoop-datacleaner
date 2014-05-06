@@ -24,8 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.Assert;
-
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
@@ -58,6 +56,7 @@ import org.eobjects.hadoopdatacleaner.tools.HBaseTool;
 import org.eobjects.metamodel.pojo.ArrayTableDataProvider;
 import org.eobjects.metamodel.pojo.TableDataProvider;
 import org.eobjects.metamodel.util.SimpleTableDef;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 

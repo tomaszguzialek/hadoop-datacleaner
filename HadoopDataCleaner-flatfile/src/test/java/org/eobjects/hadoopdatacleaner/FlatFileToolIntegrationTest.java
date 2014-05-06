@@ -21,8 +21,6 @@ package org.eobjects.hadoopdatacleaner;
 
 import java.io.File;
 
-import junit.framework.Assert;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.util.ToolRunner;
 import org.eobjects.analyzer.beans.StringAnalyzer;
@@ -40,6 +38,7 @@ import org.eobjects.analyzer.descriptors.SimpleDescriptorProvider;
 import org.eobjects.hadoopdatacleaner.tools.FlatFileTool;
 import org.eobjects.metamodel.csv.CsvConfiguration;
 import org.eobjects.metamodel.util.FileResource;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class FlatFileToolIntegrationTest {
