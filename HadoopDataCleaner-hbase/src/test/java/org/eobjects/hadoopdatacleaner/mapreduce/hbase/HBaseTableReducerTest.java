@@ -23,13 +23,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
 import org.apache.hadoop.mrunit.types.Pair;
 import org.eobjects.analyzer.beans.StringAnalyzer;
@@ -62,7 +63,7 @@ import org.slf4j.LoggerFactory;
 
 public class HBaseTableReducerTest {
 
-    ReduceDriver<Text, SortedMapWritable, NullWritable, Writable> reduceDriver;
+    ReduceDriver<Text, SortedMapWritable, NullWritable, Mutation> reduceDriver;
 
     @SuppressWarnings("unused")
     private static final Logger logger = LoggerFactory.getLogger(HBaseTableReducer.class);
@@ -102,24 +103,24 @@ public class HBaseTableReducerTest {
         String inputAnalyzerKey1 = "Value distribution (mainFamily:country_name)";
 
         reduceDriver.withInput(new Text(inputAnalyzerKey1), inputRows);
-        List<Pair<NullWritable, Writable>> actualOutputs = reduceDriver.run();
+        List<Pair<NullWritable, Mutation>> actualOutputs = reduceDriver.run();
         Assert.assertEquals(2, actualOutputs.size());
         
-        Pair<NullWritable, Writable> actualOutput1 = actualOutputs.get(0);
+        Pair<NullWritable, Mutation> actualOutput1 = actualOutputs.get(0);
         Put actualPut1 = (Put) actualOutput1.getSecond();
-        List<KeyValue> keyValues = actualPut1.get(Bytes.toBytes("mainFamily"), Bytes.toBytes("country_name"));
+        List<Cell> keyValues = actualPut1.get(Bytes.toBytes("mainFamily"), Bytes.toBytes("country_name"));
         Assert.assertEquals(1, keyValues.size());
-        KeyValue keyValue = keyValues.get(0);
-        System.out.println("Value: " + Bytes.toString(keyValue.getValue()));
-        Assert.assertEquals("Denmark", Bytes.toString(keyValue.getValue()));
+        Cell cell = keyValues.get(0);
+        System.out.println("Value: " + Bytes.toString(CellUtil.cloneValue(cell)));
+        Assert.assertEquals("Denmark", Bytes.toString(CellUtil.cloneValue(cell)));
         
-        Pair<NullWritable, Writable> actualOutput2 = actualOutputs.get(1);
+        Pair<NullWritable, Mutation> actualOutput2 = actualOutputs.get(1);
         Put actualPut2 = (Put) actualOutput2.getSecond();
         keyValues = actualPut2.get(Bytes.toBytes("mainFamily"), Bytes.toBytes("country_name"));
         Assert.assertEquals(1, keyValues.size());
-        keyValue = keyValues.get(0);
-        System.out.println("Value: " + Bytes.toString(keyValue.getValue()));
-        Assert.assertEquals("Poland", Bytes.toString(keyValue.getValue()));
+        cell = keyValues.get(0);
+        System.out.println("Value: " + Bytes.toString(CellUtil.cloneValue(cell)));
+        Assert.assertEquals("Poland", Bytes.toString(CellUtil.cloneValue(cell)));
     }
 
     public static AnalyzerBeansConfiguration buildAnalyzerBeansConfiguration() {

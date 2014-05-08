@@ -22,8 +22,8 @@ package org.eobjects.hadoopdatacleaner.datastores;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.KeyValue.SplitKeyValue;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.eobjects.analyzer.data.InputColumn;
@@ -45,11 +45,10 @@ public class HBaseParser {
 
     public InputRow prepareRow(Result result) {
         MockInputRow row = new MockInputRow();
-        for (KeyValue keyValue : result.raw()) {
-            SplitKeyValue splitKeyValue = keyValue.split();
-            String familyName = Bytes.toString(splitKeyValue.getFamily());
-            String columnName = Bytes.toString(splitKeyValue.getQualifier());
-            String value = Bytes.toString(splitKeyValue.getValue());
+        for (Cell cell : result.rawCells()) {
+            String familyName = Bytes.toString(CellUtil.cloneFamily(cell));
+            String columnName = Bytes.toString(CellUtil.cloneQualifier(cell));
+            String value = Bytes.toString(CellUtil.cloneValue(cell));
             for (Iterator<InputColumn<?>> sourceColumnsIterator = sourceColumns.iterator(); sourceColumnsIterator
                     .hasNext();) {
                 InputColumn<?> inputColumn = (InputColumn<?>) sourceColumnsIterator.next();

@@ -23,8 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.KeyValue.SplitKeyValue;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -38,29 +39,27 @@ public class ResultUtils {
 
     public static void printResult(Result result, Logger logger) {
         logger.info("Row: ");
-        for (KeyValue keyValue : result.raw()) {
-            SplitKeyValue splitKeyValue = keyValue.split();
-            byte[] family = splitKeyValue.getFamily();
-            byte[] column = splitKeyValue.getQualifier();
-            byte[] value = splitKeyValue.getValue();
+        for (Cell cell : result.rawCells()) {
+            byte[] family = CellUtil.cloneFamily(cell);
+            byte[] column = CellUtil.cloneQualifier(cell);
+            byte[] value = CellUtil.cloneValue(cell);
             logger.info("\t" + Bytes.toString(family) + ":" + Bytes.toString(column) + " = " + Bytes.toString(value));
         }
     }
 
     public static Put preparePut(Result result) {
         Put put = new Put(result.getRow());
-        for (KeyValue keyValue : result.raw()) {
-            SplitKeyValue splitKeyValue = keyValue.split();
-            byte[] family = splitKeyValue.getFamily();
-            byte[] column = splitKeyValue.getQualifier();
-            byte[] value = splitKeyValue.getValue();
+        for (Cell cell : result.rawCells()) {
+            byte[] family = CellUtil.cloneFamily(cell);
+            byte[] column = CellUtil.cloneQualifier(cell);
+            byte[] value = CellUtil.cloneValue(cell);
             put.add(family, column, value);
         }
         return put;
     }
 
     public static Result sortedMapWritableToResult(SortedMapWritable row) {
-        List<KeyValue> keyValues = new ArrayList<KeyValue>();
+        List<Cell> cells = new ArrayList<Cell>();
         for (@SuppressWarnings("rawtypes")
         Map.Entry<WritableComparable, Writable> rowEntry : row.entrySet()) {
             Text columnFamilyAndName = (Text) rowEntry.getKey();
@@ -68,11 +67,12 @@ public class ResultUtils {
             String[] split = columnFamilyAndName.toString().split(":");
             String columnFamily = split[0];
             String columnName = split[1];
-            KeyValue keyValue = new KeyValue(Bytes.toBytes(columnValue.toString()), Bytes.toBytes(columnFamily),
+            
+            Cell cell = new KeyValue(Bytes.toBytes(columnValue.toString()), Bytes.toBytes(columnFamily),
                     Bytes.toBytes(columnName), Bytes.toBytes(columnValue.toString()));
-            keyValues.add(keyValue);
+            cells.add(cell);
         }
-        return new Result(keyValues);
+        return Result.create(cells);
     }
 
 }
