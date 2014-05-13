@@ -30,7 +30,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<hadoop.version>2.3.0-cdh5.0.0</hadoop.version>
 		<analyzerbeans.version>0.41</analyzerbeans.version>
-		<mrunit.version>0.9.0-incubating</mrunit.version>
+		<mrunit.version>1.0.0</mrunit.version>
 	</properties>
 
 	<dependencies>

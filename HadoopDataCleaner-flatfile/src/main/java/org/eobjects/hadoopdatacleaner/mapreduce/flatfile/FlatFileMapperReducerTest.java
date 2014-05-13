@@ -121,7 +121,7 @@ public class FlatFileMapperReducerTest {
     }
 
     @Test
-    public void testReducerHeader() {
+    public void testReducerHeader() throws IOException {
         List<SortedMapWritable> rows = new ArrayList<SortedMapWritable>();
 
         SortedMapWritable header = new SortedMapWritable();
@@ -146,7 +146,7 @@ public class FlatFileMapperReducerTest {
     }
 
     @Test
-    public void testReducerPoland() {
+    public void testReducerPoland() throws IOException {
         List<SortedMapWritable> rows = new ArrayList<SortedMapWritable>();
 
         SortedMapWritable poland = new SortedMapWritable();

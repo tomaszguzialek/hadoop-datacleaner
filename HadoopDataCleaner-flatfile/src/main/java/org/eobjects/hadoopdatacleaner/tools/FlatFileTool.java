@@ -88,10 +88,13 @@ public final class FlatFileTool extends HadoopDataCleanerTool implements Tool {
         job.setMapOutputValueClass(SortedMapWritable.class);
 
         job.setNumReduceTasks(1);
+        
+        // TODO externalize to args?
+//        mapReduceConfiguration.addResource(new Path("/etc/hadoop/conf/core-site.xml"));
 
-        FileSystem hdfs = FileSystem.get(mapReduceConfiguration);
-        if (hdfs.exists(new Path(output)))
-            hdfs.delete(new Path(output), true);
+        FileSystem fileSystem = FileSystem.get(mapReduceConfiguration);
+        if (fileSystem.exists(new Path(output)))
+            fileSystem.delete(new Path(output), true);
 
         boolean success = job.waitForCompletion(true);
         return success ? 0 : 1;
