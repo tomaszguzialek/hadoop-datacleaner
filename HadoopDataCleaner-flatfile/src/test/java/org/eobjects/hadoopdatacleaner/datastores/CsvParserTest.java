@@ -64,14 +64,7 @@ public class CsvParserTest {
         expectedRow.put(new MockInputColumn<String>("Synonym1"), "Synonym1");
         expectedRow.put(new MockInputColumn<String>("Synonym2"), "Synonym2");
 
-        InputRow actualRow = csvParser.prepareRow(csvLine);
-
-        Iterator<InputColumn<?>> actualColumnIterator = actualRow.getInputColumns().iterator();
-        for (InputColumn<?> expectedInputColumn : expectedRow.getInputColumns()) {
-            InputColumn<?> actualInputColumn = actualColumnIterator.next();
-            Assert.assertEquals(expectedInputColumn.getName(), actualInputColumn.getName());
-            Assert.assertEquals(expectedRow.getValue(expectedInputColumn), actualRow.getValue(actualInputColumn));
-        }
+        csvParser.parseHeaderRow(csvLine);
 
         csvLine = new Text("Denmark;DK;DNK;208;;Danmark;Danemark;");
 
@@ -84,9 +77,9 @@ public class CsvParserTest {
         expectedRow.put(new MockInputColumn<String>("Synonym1"), "Danmark");
         expectedRow.put(new MockInputColumn<String>("Synonym2"), "Danemark");
         
-        actualRow = csvParser.prepareRow(csvLine);
+        InputRow actualRow = csvParser.prepareRow(csvLine);
 
-        actualColumnIterator = actualRow.getInputColumns().iterator();
+        Iterator<InputColumn<?>> actualColumnIterator = actualRow.getInputColumns().iterator();
         for (InputColumn<?> expectedInputColumn : expectedRow.getInputColumns()) {
             InputColumn<?> actualInputColumn = actualColumnIterator.next();
             Assert.assertEquals(expectedInputColumn.getName(), actualInputColumn.getName());

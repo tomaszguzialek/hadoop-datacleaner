@@ -77,7 +77,7 @@ public final class FlatFileTool extends HadoopDataCleanerTool implements Tool {
         Job job = Job.getInstance(mapReduceConfiguration);
         job.setJarByClass(FlatFileMapper.class);
         job.setJobName(this.getClass().getName());
-
+        
         FileInputFormat.setInputPaths(job, new Path(input));
         FileOutputFormat.setOutputPath(job, new Path(output));
 
