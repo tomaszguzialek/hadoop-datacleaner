@@ -31,10 +31,10 @@ import org.eobjects.analyzer.connection.Datastore;
 import org.eobjects.analyzer.connection.DatastoreCatalog;
 import org.eobjects.analyzer.connection.DatastoreCatalogImpl;
 import org.eobjects.analyzer.descriptors.ClasspathScanDescriptorProvider;
-import org.eobjects.metamodel.csv.CsvConfiguration;
-import org.eobjects.metamodel.util.FileResource;
-import org.eobjects.metamodel.util.Resource;
-import org.eobjects.metamodel.util.UrlResource;
+import org.apache.metamodel.csv.CsvConfiguration;
+import org.apache.metamodel.util.FileResource;
+import org.apache.metamodel.util.Resource;
+import org.apache.metamodel.util.UrlResource;
 
 public class SampleCsvConfiguration {
 
@@ -67,6 +67,7 @@ public class SampleCsvConfiguration {
 
         ClasspathScanDescriptorProvider descriptorProvider = new ClasspathScanDescriptorProvider();
         descriptorProvider.scanPackage("org.eobjects", true);
+        descriptorProvider.scanPackage("com.hi", true);
 
         return new AnalyzerBeansConfigurationImpl().replace(datastoreCatalog)
                 .replace(descriptorProvider);
