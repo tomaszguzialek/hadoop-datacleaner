@@ -57,16 +57,26 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, Text, SortedMapWr
 
     @Override
     public void map(LongWritable key, Text csvLine, final Context context) throws IOException, InterruptedException {
-        InputRow inputRow = csvParser.prepareRow(csvLine);
-
-        Callback mapperEmitterCallback = new MapperEmitter.Callback() {
-
-            public void write(Text key, SortedMapWritable row) throws IOException, InterruptedException {
-                context.write(key, row);
-
-            }
-        };
-        
-        mapperDelegate.run(inputRow, mapperEmitterCallback);
+        if (key.get() == 0L) {
+        	context.getConfiguration().set("csv.header.line", csvLine.toString());
+        	csvParser.parseHeaderRow(csvLine);
+        } else {
+        	while (context.getConfiguration().get("csv.header.line") == null) {
+        		// Wait for the header to be read.
+        	}
+        	InputRow inputRow = csvParser.prepareRow(csvLine);
+        	
+        	Callback mapperEmitterCallback = new MapperEmitter.Callback() {
+        		
+        		public void write(Text key, SortedMapWritable row) throws IOException, InterruptedException {
+        			context.write(key, row);
+        			
+        		}
+        	};
+        	
+        	mapperDelegate.run(inputRow, mapperEmitterCallback);
+        	
+        }
+    	
     }
 }

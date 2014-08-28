@@ -22,22 +22,16 @@ package org.eobjects.hadoopdatacleaner.configuration.sample;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eobjects.analyzer.beans.StringAnalyzer;
-import org.eobjects.analyzer.beans.filter.EqualsFilter;
-import org.eobjects.analyzer.beans.transform.ConcatenatorTransformer;
-import org.eobjects.analyzer.beans.transform.TokenizerTransformer;
-import org.eobjects.analyzer.beans.writers.InsertIntoTableAnalyzer;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfigurationImpl;
 import org.eobjects.analyzer.connection.Datastore;
 import org.eobjects.analyzer.connection.DatastoreCatalog;
 import org.eobjects.analyzer.connection.DatastoreCatalogImpl;
 import org.eobjects.analyzer.connection.PojoDatastore;
-import org.eobjects.analyzer.descriptors.Descriptors;
-import org.eobjects.analyzer.descriptors.SimpleDescriptorProvider;
-import org.eobjects.metamodel.pojo.ArrayTableDataProvider;
-import org.eobjects.metamodel.pojo.TableDataProvider;
-import org.eobjects.metamodel.util.SimpleTableDef;
+import org.eobjects.analyzer.descriptors.ClasspathScanDescriptorProvider;
+import org.apache.metamodel.pojo.ArrayTableDataProvider;
+import org.apache.metamodel.pojo.TableDataProvider;
+import org.apache.metamodel.util.SimpleTableDef;
 
 public class SampleHBaseConfiguration {
 
@@ -53,12 +47,8 @@ public class SampleHBaseConfiguration {
 
         DatastoreCatalog datastoreCatalog = new DatastoreCatalogImpl(datastore);
 
-        SimpleDescriptorProvider descriptorProvider = new SimpleDescriptorProvider(true);
-        descriptorProvider.addTransformerBeanDescriptor(Descriptors.ofTransformer(ConcatenatorTransformer.class));
-        descriptorProvider.addTransformerBeanDescriptor(Descriptors.ofTransformer(TokenizerTransformer.class));
-        descriptorProvider.addFilterBeanDescriptor(Descriptors.ofFilter(EqualsFilter.class));
-        descriptorProvider.addAnalyzerBeanDescriptor(Descriptors.ofAnalyzer(InsertIntoTableAnalyzer.class));
-        descriptorProvider.addAnalyzerBeanDescriptor(Descriptors.ofAnalyzer(StringAnalyzer.class));
+        ClasspathScanDescriptorProvider descriptorProvider = new ClasspathScanDescriptorProvider();
+        descriptorProvider.scanPackage("org.eobjects", true);
 
         return new AnalyzerBeansConfigurationImpl().replace(datastoreCatalog).replace(descriptorProvider);
     }

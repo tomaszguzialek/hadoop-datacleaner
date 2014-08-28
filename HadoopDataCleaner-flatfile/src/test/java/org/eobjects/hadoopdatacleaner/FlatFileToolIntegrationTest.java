@@ -23,21 +23,16 @@ import java.io.File;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.util.ToolRunner;
-import org.eobjects.analyzer.beans.StringAnalyzer;
-import org.eobjects.analyzer.beans.transform.ConcatenatorTransformer;
-import org.eobjects.analyzer.beans.transform.TokenizerTransformer;
-import org.eobjects.analyzer.beans.writers.InsertIntoTableAnalyzer;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfigurationImpl;
 import org.eobjects.analyzer.connection.CsvDatastore;
 import org.eobjects.analyzer.connection.Datastore;
 import org.eobjects.analyzer.connection.DatastoreCatalog;
 import org.eobjects.analyzer.connection.DatastoreCatalogImpl;
-import org.eobjects.analyzer.descriptors.Descriptors;
-import org.eobjects.analyzer.descriptors.SimpleDescriptorProvider;
+import org.eobjects.analyzer.descriptors.ClasspathScanDescriptorProvider;
 import org.eobjects.hadoopdatacleaner.tools.FlatFileTool;
-import org.eobjects.metamodel.csv.CsvConfiguration;
-import org.eobjects.metamodel.util.FileResource;
+import org.apache.metamodel.csv.CsvConfiguration;
+import org.apache.metamodel.util.FileResource;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -64,11 +59,8 @@ public class FlatFileToolIntegrationTest {
 
         DatastoreCatalog datastoreCatalog = new DatastoreCatalogImpl(datastore);
 
-        SimpleDescriptorProvider descriptorProvider = new SimpleDescriptorProvider(true);
-        descriptorProvider.addTransformerBeanDescriptor(Descriptors.ofTransformer(ConcatenatorTransformer.class));
-        descriptorProvider.addTransformerBeanDescriptor(Descriptors.ofTransformer(TokenizerTransformer.class));
-        descriptorProvider.addAnalyzerBeanDescriptor(Descriptors.ofAnalyzer(InsertIntoTableAnalyzer.class));
-        descriptorProvider.addAnalyzerBeanDescriptor(Descriptors.ofAnalyzer(StringAnalyzer.class));
+        ClasspathScanDescriptorProvider descriptorProvider = new ClasspathScanDescriptorProvider();
+        descriptorProvider.scanPackage("org.eobjects", true);
 
         return new AnalyzerBeansConfigurationImpl().replace(datastoreCatalog).replace(descriptorProvider);
     }

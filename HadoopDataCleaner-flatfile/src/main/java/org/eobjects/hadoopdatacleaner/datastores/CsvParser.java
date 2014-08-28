@@ -34,79 +34,84 @@ import org.eobjects.analyzer.data.MockInputRow;
 
 public class CsvParser {
 
-    private Collection<InputColumn<?>> jobColumns;
+	private Collection<InputColumn<?>> jobColumns;
 
-    private Collection<Boolean> usedColumns;
+	private Collection<Boolean> usedColumns;
 
-    private String delimiter;
+	private String delimiter;
 
-    public CsvParser(Collection<InputColumn<?>> jobColumns) {
-        this(jobColumns, ",");
-    }
+	public CsvParser(Collection<InputColumn<?>> jobColumns) {
+		this(jobColumns, ",");
+	}
 
-    public CsvParser(Collection<InputColumn<?>> jobColumns, String delimiter) {
-        this.jobColumns = jobColumns;
-        this.delimiter = delimiter;
-    }
+	public CsvParser(Collection<InputColumn<?>> jobColumns, String delimiter) {
+		this.jobColumns = jobColumns;
+		this.delimiter = delimiter;
+	}
 
-    private void parseHeaderRow(Text csvLine) {
-        if (usedColumns == null) {
-            usedColumns = new ArrayList<Boolean>();
+	public void parseHeaderRow(Text csvLine) {
+		if (usedColumns == null) {
+			usedColumns = new ArrayList<Boolean>();
 
-            String[] values = csvLine.toString().split(delimiter);
+			String[] values = csvLine.toString().split(delimiter);
 
-            for (String value : values) {
-                Boolean found = false;
-                for (Iterator<InputColumn<?>> jobColumnsIterator = jobColumns.iterator(); jobColumnsIterator.hasNext();) {
-                    InputColumn<?> jobColumn = (InputColumn<?>) jobColumnsIterator.next();
-                    String shortName = jobColumn.getName().substring(jobColumn.getName().lastIndexOf('.') + 1);
-                    if (shortName.equals(value)) {
-                        found = true;
-                        break;
-                    }
-                }
-                usedColumns.add(found);
-            }
-        }
+			for (String value : values) {
+				Boolean found = false;
+				for (Iterator<InputColumn<?>> jobColumnsIterator = jobColumns
+						.iterator(); jobColumnsIterator.hasNext();) {
+					InputColumn<?> jobColumn = (InputColumn<?>) jobColumnsIterator
+							.next();
+					String shortName = jobColumn.getName().substring(
+							jobColumn.getName().lastIndexOf('.') + 1);
+					if (shortName.equals(value)) {
+						found = true;
+						break;
+					}
+				}
+				usedColumns.add(found);
+			}
+		}
 
-    }
+	}
 
-    public InputRow prepareRow(Text csvLine) {
-        if (usedColumns == null)
-            parseHeaderRow(csvLine);
+	public InputRow prepareRow(Text csvLine) {
+		if (usedColumns == null)
+			throw new IllegalStateException(
+					"The data row cannot be processed before the header row is processed. The  \"prepareHeaderRow\" needs to be called first.");
 
-        String[] values = csvLine.toString().split(";");
+		String[] values = csvLine.toString().split(";");
 
-        Iterator<InputColumn<?>> jobColumnsIterator = jobColumns.iterator();
-        Iterator<Boolean> usedColumnsIterator = usedColumns.iterator();
+		Iterator<InputColumn<?>> jobColumnsIterator = jobColumns.iterator();
+		Iterator<Boolean> usedColumnsIterator = usedColumns.iterator();
 
-        MockInputRow row = new MockInputRow();
-        for (String value : values) {
-            Boolean used = usedColumnsIterator.next();
-            if (used) {
-                InputColumn<?> inputColumn = jobColumnsIterator.next();
-                row.put(inputColumn, value);
-            }
-        }
-        return row;
-    }
+		MockInputRow row = new MockInputRow();
+		for (String value : values) {
+			Boolean used = usedColumnsIterator.next();
+			if (used) {
+				InputColumn<?> inputColumn = jobColumnsIterator.next();
+				row.put(inputColumn, value);
+			}
+		}
+		return row;
+	}
 
-    public static Text toCsvText(SortedMapWritable row) {
-        Text finalText = new Text();
-        for (@SuppressWarnings("rawtypes")
-        Iterator<Entry<WritableComparable, Writable>> iterator = row.entrySet().iterator(); iterator.hasNext();) {
-            @SuppressWarnings("rawtypes")
-            Entry<WritableComparable, Writable> next = iterator.next();
-            if (next.getValue() instanceof Text) {
-                Text value = ((Text) next.getValue());
-                finalText.set(finalText.toString() + value.toString());
-            } // else do not append anything - the value is null, so empty.
-            if (iterator.hasNext())
-                finalText.set(finalText.toString() + ";");
-            else
-                finalText.set(finalText.toString());
-        }
-        return finalText;
-    }
+	public static Text toCsvText(SortedMapWritable row) {
+		Text finalText = new Text();
+		for (@SuppressWarnings("rawtypes")
+		Iterator<Entry<WritableComparable, Writable>> iterator = row.entrySet()
+				.iterator(); iterator.hasNext();) {
+			@SuppressWarnings("rawtypes")
+			Entry<WritableComparable, Writable> next = iterator.next();
+			if (next.getValue() instanceof Text) {
+				Text value = ((Text) next.getValue());
+				finalText.set(finalText.toString() + value.toString());
+			} // else do not append anything - the value is null, so empty.
+			if (iterator.hasNext())
+				finalText.set(finalText.toString() + ";");
+			else
+				finalText.set(finalText.toString());
+		}
+		return finalText;
+	}
 
 }

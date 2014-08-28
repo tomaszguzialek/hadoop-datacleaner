@@ -89,6 +89,8 @@ public final class HBaseTool extends HadoopDataCleanerTool implements Tool {
                                                                 // table name
                 HBaseTableReducer.class, // reducer class
                 job);
+        
+        TableMapReduceUtil.addDependencyJars(job);
 
         boolean success = job.waitForCompletion(true);
         return success ? 0 : 1;

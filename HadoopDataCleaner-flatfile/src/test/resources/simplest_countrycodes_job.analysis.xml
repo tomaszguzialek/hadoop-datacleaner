@@ -7,9 +7,9 @@
     <source>
         <data-context ref="countrycodes.csv"/>
         <columns>
-            <column type="VARCHAR" path="countrycodes.csv.countrycodes.Country name" id="col_0"/>
-            <column type="VARCHAR" path="countrycodes.csv.countrycodes.ISO 3166-2" id="col_1"/>
-            <column type="VARCHAR" path="countrycodes.csv.countrycodes.ISO 3166-3" id="col_2"/>
+            <column type="VARCHAR" path="resources.countrycodes.csv.Country name" id="col_0"/>
+            <column type="VARCHAR" path="resources.countrycodes.csv.ISO 3166-2" id="col_1"/>
+            <column type="VARCHAR" path="resources.countrycodes.csv.ISO 3166-3" id="col_2"/>
         </columns>
     </source>
     <transformation>
