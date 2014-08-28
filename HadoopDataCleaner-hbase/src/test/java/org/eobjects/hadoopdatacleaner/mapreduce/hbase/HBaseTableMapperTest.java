@@ -115,8 +115,8 @@ public class HBaseTableMapperTest {
 		expectedOutput.put(new Text("mainFamily:country_name"), new Text(
 				"Denmark"));
 		expectedOutput.put(new Text("mainFamily:iso2"), new Text("DK"));
-		expectedOutput
-				.put(new Text("mainFamily:iso2_iso3"), new Text("DK_DNK"));
+		// Commented because emitting is commented
+		//expectedOutput.put(new Text("mainFamily:iso2_iso3"), new Text("DK_DNK"));
 		expectedOutput.put(new Text("mainFamily:iso3"), new Text("DNK"));
 
 		String expectedAnalyzerKey1 = "Value distribution (mainFamily:country_name)";

@@ -34,12 +34,14 @@ import org.eobjects.hadoopdatacleaner.tools.FlatFileTool;
 import org.apache.metamodel.csv.CsvConfiguration;
 import org.apache.metamodel.util.FileResource;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class FlatFileToolIntegrationTest {
 
     FlatFileTool flatFileTool;
 
+    @Ignore
     @Test
     public void test() throws Exception {
         String[] args = new String[3];
