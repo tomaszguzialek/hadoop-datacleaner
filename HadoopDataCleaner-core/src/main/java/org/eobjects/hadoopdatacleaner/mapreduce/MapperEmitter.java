@@ -56,11 +56,15 @@ public class MapperEmitter {
         Iterator<OutcomeSink> outcomeSinksIterator = consumeRowResult.getOutcomeSinks().iterator();
         for (InputRow transformedRow : consumeRowResult.getRows()) {
             SortedMapWritable rowWritable = RowUtils.inputRowToSortedMapWritable(transformedRow);
+//            logger.debug("The row after being converted to SortedMapWritable: ");
+//            RowUtils.printSortedMapWritable(rowWritable, logger);
+            // FIXME: hasNext() somehow !
+//            logger.info("");
             OutcomeSink outcomeSink = outcomeSinksIterator.next();
             for (AnalyzerJob analyzerJob : analyzerJobs) {
                 if (isAnalyzerSatisfied(analyzerJob, outcomeSink)) {
                     String analyzerLabel = LabelUtils.getLabel(analyzerJob);
-                    logger.info("Emitting " + transformedRow + " to " + analyzerLabel);
+//                    logger.info("Emitting " + transformedRow + " to " + analyzerLabel);
                     callback.write(new Text(analyzerLabel), rowWritable);
                 }
             }

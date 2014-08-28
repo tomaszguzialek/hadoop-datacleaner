@@ -51,7 +51,7 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, Text, SortedMapWr
                 .get(FlatFileTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY);
         String analysisJobXml = mapReduceConfiguration.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
         this.mapperDelegate = new MapperDelegate(datastoresConfigurationLines, analysisJobXml);
-        csvParser = new CsvParser(mapperDelegate.getAnalysisJob().getSourceColumns(), ";");
+        csvParser = new CsvParser(mapperDelegate.getAnalysisJob().getSourceColumns(), ",");
         super.setup(context);
     }
 

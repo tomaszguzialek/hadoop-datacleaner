@@ -49,7 +49,9 @@ public class HBaseTableMapper extends TableMapper</* KEYOUT */Text, /* VALUEOUT 
     protected void setup(
             org.apache.hadoop.mapreduce.Mapper</* KEYIN */ImmutableBytesWritable, /* VALUEIN */Result, /* KEYOUT */Text, /* VALUEOUT */SortedMapWritable>.Context context)
             throws IOException, InterruptedException {
-        Configuration mapReduceConfiguration = context.getConfiguration();
+        System.setProperty("jdk.xml.entityExpansionLimit", "0");
+    	
+    	Configuration mapReduceConfiguration = context.getConfiguration();
         String datastoresConfigurationLines = mapReduceConfiguration
                 .get(HadoopDataCleanerTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY);
         String analysisJobXml = mapReduceConfiguration.get(HadoopDataCleanerTool.ANALYSIS_JOB_XML_KEY);
@@ -61,12 +63,13 @@ public class HBaseTableMapper extends TableMapper</* KEYOUT */Text, /* VALUEOUT 
     public void map(/* KEYIN */ImmutableBytesWritable row, /* VALUEIN */Result result, final Context context)
             throws InterruptedException, IOException {
 
-        InputRow inputRow = hBaseParser.prepareRow(result);
+        
+    	InputRow inputRow = hBaseParser.prepareRow(result);
 
         Callback mapperEmitterCallback = new MapperEmitter.Callback() {
             
             public void write(Text key, SortedMapWritable row) throws IOException, InterruptedException {
-                context.write(key, row);
+            	context.write(key, row);
             }
         };
         

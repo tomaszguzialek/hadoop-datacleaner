@@ -67,8 +67,8 @@ public class FlatFileReducer extends Reducer<Text, SortedMapWritable, NullWritab
 
         logger.info("analyzerKey = " + analyzerKey.toString() + " rows: ");
         for (SortedMapWritable rowWritable : rows) {
-            InputRow inputRow = RowUtils.sortedMapWritableToInputRow(rowWritable, analysisJob.getSourceColumns());
-            analyzer.run(inputRow, 1);
+//            InputRow inputRow = RowUtils.sortedMapWritableToInputRow(rowWritable, analysisJob.getSourceColumns());
+//            analyzer.run(inputRow, 1);
 
             RowUtils.printSortedMapWritable(rowWritable, logger);
 

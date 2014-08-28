@@ -20,57 +20,58 @@
 package org.eobjects.hadoopdatacleaner.configuration.sample;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FsUrlStreamHandlerFactory;
+import org.apache.metamodel.csv.CsvConfiguration;
+import org.apache.metamodel.util.Resource;
+import org.apache.metamodel.util.UrlResource;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfigurationImpl;
 import org.eobjects.analyzer.connection.CsvDatastore;
 import org.eobjects.analyzer.connection.Datastore;
 import org.eobjects.analyzer.connection.DatastoreCatalog;
 import org.eobjects.analyzer.connection.DatastoreCatalogImpl;
-import org.eobjects.analyzer.descriptors.ClasspathScanDescriptorProvider;
-import org.apache.metamodel.csv.CsvConfiguration;
-import org.apache.metamodel.util.FileResource;
-import org.apache.metamodel.util.Resource;
-import org.apache.metamodel.util.UrlResource;
+import org.eobjects.analyzer.descriptors.SimpleDescriptorProvider;
 
 public class SampleCsvConfiguration {
 
     static {
-        // java.lang.StackOverflow workaround
-        // http://stackoverflow.com/questions/17360018/getting-stack-overflow-error-in-hadoop
-        Configuration conf = new Configuration();
-        try {
-            FileSystem.getFileSystemClass("file", conf);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
-        // The end of the workaround
         URL.setURLStreamHandlerFactory(new FsUrlStreamHandlerFactory());
     }
 
     public static AnalyzerBeansConfiguration buildAnalyzerBeansConfiguration(String csvFilePath) {
-        Resource resource;
-        if (csvFilePath.startsWith("hdfs://")) {
-            resource = new UrlResource(csvFilePath);
-        } else {
-            resource = new FileResource(csvFilePath);
-        }
+        Resource resourceInput = new UrlResource(csvFilePath);
         
         CsvConfiguration csvConfiguration = new CsvConfiguration(1, "UTF8", ';', '"', '\\');
-        Datastore datastore = new CsvDatastore(csvFilePath.substring(csvFilePath.lastIndexOf('/') + 1),
-                resource, csvConfiguration);
+        Datastore datastoreInput = new CsvDatastore(csvFilePath.substring(csvFilePath.lastIndexOf('/') + 1),
+                resourceInput, csvConfiguration);
         
-        DatastoreCatalog datastoreCatalog = new DatastoreCatalogImpl(datastore);
+        DatastoreCatalog datastoreCatalog = new DatastoreCatalogImpl(datastoreInput);
 
-        ClasspathScanDescriptorProvider descriptorProvider = new ClasspathScanDescriptorProvider();
-        descriptorProvider.scanPackage("org.eobjects", true);
-        descriptorProvider.scanPackage("com.hi", true);
-
-        return new AnalyzerBeansConfigurationImpl().replace(datastoreCatalog)
-                .replace(descriptorProvider);
+//        ClasspathScanDescriptorProvider descriptorProvider = new ClasspathScanDescriptorProvider();
+//        descriptorProvider.scanPackage("org.eobjects", true);
+//        descriptorProvider.scanPackage("com.hi", true);
+        
+        List<String> transformers = new ArrayList<String>();
+        transformers.add("com.hi.contacts.datacleaner.NameTransformer");
+        transformers.add("com.hi.contacts.datacleaner.EmailTransformer");
+        transformers.add("com.hi.contacts.datacleaner.AddressTransformer");
+        transformers.add("com.hi.contacts.datacleaner.PhoneTransformer");
+        
+        List<String> analyzers = new ArrayList<String>();
+        analyzers.add("org.eobjects.analyzer.beans.writers.InsertIntoTableAnalyzer");
+        
+        SimpleDescriptorProvider descriptorProvider = new SimpleDescriptorProvider();
+        try {
+			descriptorProvider.setTransformerClassNames(transformers);
+			descriptorProvider.setAnalyzerClassNames(analyzers);
+			return new AnalyzerBeansConfigurationImpl().replace(datastoreCatalog)
+					.replace(descriptorProvider);
+		} catch (ClassNotFoundException e) {
+			throw new IllegalStateException(e);
+		}
     }
     
 

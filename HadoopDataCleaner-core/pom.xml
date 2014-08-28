@@ -54,5 +54,27 @@
 			<artifactId>AnalyzerBeans-value-distribution</artifactId>
 			<version>${analyzerbeans.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.eobjects.datacleaner</groupId>
+			<artifactId>DataCleaner-core</artifactId>
+			<version>3.5.11-apachemetamodel-SNAPSHOT</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.hi.contacts</groupId>
+			<artifactId>HIqualityContacts-datacleaner-cleansing</artifactId>
+			<version>1.34-apachemetamodel-SNAPSHOT</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.hi.phone</groupId>
+					<artifactId>phone-core</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.hi.contacts</groupId>
+			<artifactId>HIqualityContacts-datacleaner-dedup-common</artifactId>
+			<version>1.34-apachemetamodel-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 </project>

@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 public class RowUtils {
 
     public static void printSortedMapWritable(SortedMapWritable row, Logger logger) {
-        logger.info("Row: ");
+        logger.info("Row (SortedMapWritable): ");
         for (@SuppressWarnings("rawtypes")
         Map.Entry<WritableComparable, Writable> entry : row.entrySet()) {
             Text columnName = (Text) entry.getKey();

@@ -45,7 +45,7 @@ public class FlatFileToolIntegrationTest {
         String[] args = new String[3];
         args[0] = "src/test/resources/simplest_countrycodes_job.analysis.xml";
         args[1] = "src/test/resources/countrycodes.csv";
-        args[2] = "output";
+        args[2] = "hdfs://localhost.localdomain:8020/user/cloudera/output";
         AnalyzerBeansConfiguration analyzerBeansConfiguration = buildAnalyzerBeansConfigurationLocalFS(args[1]);
         String analysisJobXml = FileUtils.readFileToString(new File(args[0]));
         flatFileTool = new FlatFileTool(analyzerBeansConfiguration, analysisJobXml);

@@ -20,6 +20,8 @@
 package org.eobjects.hadoopdatacleaner.mapreduce;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.data.InputRow;
@@ -52,8 +54,12 @@ public class MapperDelegate extends MapperReducerDelegate {
         ConsumeRowHandler consumeRowHandler = new ConsumeRowHandler(analysisJob, analyzerBeansConfiguration,
                 configuration);
         ConsumeRowResult consumeRowResult = consumeRowHandler.consumeRow(inputRow);
-
+        
+        List<InputRow> inputRows = new ArrayList<InputRow>();
+        inputRows.add(inputRow);
+        ConsumeRowResult noOperationResult = new ConsumeRowResult(inputRows, consumeRowResult.getOutcomeSinks());
+        
         MapperEmitter mapperEmitter = new MapperEmitter(mapperEmitterCallback);
-        mapperEmitter.emit(consumeRowResult, analysisJob.getAnalyzerJobs());
+        mapperEmitter.emit(noOperationResult, analysisJob.getAnalyzerJobs());
     }
 }

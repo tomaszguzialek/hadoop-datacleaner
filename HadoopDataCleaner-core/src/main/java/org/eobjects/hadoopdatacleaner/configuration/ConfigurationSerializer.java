@@ -27,6 +27,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.metamodel.pojo.ArrayTableDataProvider;
+import org.apache.metamodel.pojo.TableDataProvider;
+import org.apache.metamodel.schema.Schema;
+import org.apache.metamodel.schema.Table;
+import org.apache.metamodel.util.SimpleTableDef;
 import org.eobjects.analyzer.beans.api.Analyzer;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfigurationImpl;
@@ -34,7 +39,7 @@ import org.eobjects.analyzer.connection.Datastore;
 import org.eobjects.analyzer.connection.DatastoreCatalog;
 import org.eobjects.analyzer.connection.DatastoreCatalogImpl;
 import org.eobjects.analyzer.connection.PojoDatastore;
-import org.eobjects.analyzer.descriptors.ClasspathScanDescriptorProvider;
+import org.eobjects.analyzer.descriptors.SimpleDescriptorProvider;
 import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.analyzer.job.AnalyzerJob;
 import org.eobjects.analyzer.job.JaxbJobReader;
@@ -42,11 +47,6 @@ import org.eobjects.analyzer.job.JaxbJobWriter;
 import org.eobjects.analyzer.lifecycle.LifeCycleHelper;
 import org.eobjects.analyzer.util.LabelUtils;
 import org.eobjects.analyzer.util.ReflectionUtils;
-import org.apache.metamodel.pojo.ArrayTableDataProvider;
-import org.apache.metamodel.pojo.TableDataProvider;
-import org.apache.metamodel.schema.Schema;
-import org.apache.metamodel.schema.Table;
-import org.apache.metamodel.util.SimpleTableDef;
 
 public class ConfigurationSerializer {
 
@@ -94,11 +94,37 @@ public class ConfigurationSerializer {
 
 		DatastoreCatalog datastoreCatalog = new DatastoreCatalogImpl(datastores);
 
-		ClasspathScanDescriptorProvider descriptorProvider = new ClasspathScanDescriptorProvider();
-		descriptorProvider.scanPackage("org.eobjects", true);
-
-		return new AnalyzerBeansConfigurationImpl().replace(datastoreCatalog)
-				.replace(descriptorProvider);
+//		ClasspathScanDescriptorProvider descriptorProvider = new ClasspathScanDescriptorProvider();
+//		descriptorProvider.scanPackage("org.eobjects", true);
+		
+		List<String> transformers = new ArrayList<String>();
+		transformers.add("org.eobjects.analyzer.beans.transform.ConcatenatorTransformer");
+        transformers.add("com.hi.contacts.datacleaner.NameTransformer");
+        transformers.add("com.hi.contacts.datacleaner.EmailTransformer");
+        transformers.add("com.hi.contacts.datacleaner.AddressTransformer");
+        transformers.add("com.hi.contacts.datacleaner.PhoneTransformer");
+        transformers.add("org.eobjects.analyzer.beans.ParseJsonTransformer");
+        transformers.add("org.eobjects.analyzer.beans.ComposeJsonTransformer");
+        
+        List<String> filters = new ArrayList<String>();
+        filters.add("org.eobjects.analyzer.beans.filter.EqualsFilter");
+        filters.add("org.eobjects.analyzer.beans.filter.StringValueRangeFilter");
+        
+        List<String> analyzers = new ArrayList<String>();
+        analyzers.add("org.eobjects.analyzer.beans.writers.InsertIntoTableAnalyzer");
+        analyzers.add("org.eobjects.analyzer.beans.valuedist.ValueDistributionAnalyzer");
+        analyzers.add("org.eobjects.analyzer.beans.StringAnalyzer");
+        
+        SimpleDescriptorProvider descriptorProvider = new SimpleDescriptorProvider();
+        try {
+			descriptorProvider.setTransformerClassNames(transformers);
+			descriptorProvider.setFilterClassNames(filters);
+			descriptorProvider.setAnalyzerClassNames(analyzers);
+			return new AnalyzerBeansConfigurationImpl().replace(datastoreCatalog)
+					.replace(descriptorProvider);
+		} catch (ClassNotFoundException e) {
+			throw new IllegalStateException(e);
+		}
 	}
 
 	public static AnalysisJob deserializeAnalysisJobFromXml(

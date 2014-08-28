@@ -23,56 +23,82 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.slf4j.Logger;
 
+import com.healthmarketscience.jackcess.ByteUtil;
+
 public class ResultUtils {
 
-    public static void printResult(Result result, Logger logger) {
-        logger.info("Row: ");
-        for (Cell cell : result.rawCells()) {
-            byte[] family = CellUtil.cloneFamily(cell);
-            byte[] column = CellUtil.cloneQualifier(cell);
-            byte[] value = CellUtil.cloneValue(cell);
-            logger.info("\t" + Bytes.toString(family) + ":" + Bytes.toString(column) + " = " + Bytes.toString(value));
-        }
-    }
+	public static void printResult(Result result, Logger logger) {
+		logger.info("Row: ");
+		for (Cell cell : result.rawCells()) {
+			byte[] family = CellUtil.cloneFamily(cell);
+			byte[] column = CellUtil.cloneQualifier(cell);
+			byte[] value = CellUtil.cloneValue(cell);
+			logger.info("\t" + Bytes.toString(family) + ":"
+					+ Bytes.toString(column) + " = " + Bytes.toString(value));
+		}
+	}
+	
+	public static void printResult(Result result, Log LOG) {
+		LOG.info("Row: ");
+		for (Cell cell : result.rawCells()) {
+			byte[] family = CellUtil.cloneFamily(cell);
+			byte[] column = CellUtil.cloneQualifier(cell);
+			byte[] value = CellUtil.cloneValue(cell);
+			LOG.info("\t" + Bytes.toString(family) + ":"
+					+ Bytes.toString(column) + " = " + Bytes.toString(value));
+		}
+	}
 
-    public static Put preparePut(Result result) {
-        Put put = new Put(result.getRow());
-        for (Cell cell : result.rawCells()) {
-            byte[] family = CellUtil.cloneFamily(cell);
-            byte[] column = CellUtil.cloneQualifier(cell);
-            byte[] value = CellUtil.cloneValue(cell);
-            put.add(family, column, value);
-        }
-        return put;
-    }
+	public static Put preparePut(Result result) {
+		Put put = new Put(result.getRow());
+		for (Cell cell : result.rawCells()) {
+			byte[] family = CellUtil.cloneFamily(cell);
+			byte[] column = CellUtil.cloneQualifier(cell);
+			byte[] value = CellUtil.cloneValue(cell);
+			put.add(family, column, value);
+		}
+		return put;
+	}
 
-    public static Result sortedMapWritableToResult(SortedMapWritable row) {
-        List<Cell> cells = new ArrayList<Cell>();
-        for (@SuppressWarnings("rawtypes")
-        Map.Entry<WritableComparable, Writable> rowEntry : row.entrySet()) {
-            Text columnFamilyAndName = (Text) rowEntry.getKey();
-            Text columnValue = (Text) rowEntry.getValue();
-            String[] split = columnFamilyAndName.toString().split(":");
-            String columnFamily = split[0];
-            String columnName = split[1];
-            
-            Cell cell = new KeyValue(Bytes.toBytes(columnValue.toString()), Bytes.toBytes(columnFamily),
-                    Bytes.toBytes(columnName), Bytes.toBytes(columnValue.toString()));
-            cells.add(cell);
-        }
-        return Result.create(cells);
-    }
+	public static Result sortedMapWritableToResult(SortedMapWritable row) {
+		List<Cell> cells = new ArrayList<Cell>();
+		for (@SuppressWarnings("rawtypes")
+		Map.Entry<WritableComparable, Writable> rowEntry : row.entrySet()) {
+			if (!(rowEntry.getValue() instanceof NullWritable)) {
+				Text columnFamilyAndName = (Text) (rowEntry.getKey());
+				if (!columnFamilyAndName.toString().startsWith("mainFamily:")) {
+					columnFamilyAndName.set(Bytes.toBytes("mainFamily:"
+							+ columnFamilyAndName.toString()));
+				}
+				Text columnValue = (Text) rowEntry.getValue();
+				if (!columnValue.toString().equals("")) {
+					String[] split = columnFamilyAndName.toString().split(":");
+					String columnFamily = split[0];
+					String columnName = split[1];
+
+					Cell cell = new KeyValue(Bytes.toBytes(columnValue
+							.toString()), Bytes.toBytes(columnFamily),
+							Bytes.toBytes(columnName),
+							Bytes.toBytes(columnValue.toString()));
+					cells.add(cell);
+				}
+			}
+		}
+		return Result.create(cells);
+	}
 
 }

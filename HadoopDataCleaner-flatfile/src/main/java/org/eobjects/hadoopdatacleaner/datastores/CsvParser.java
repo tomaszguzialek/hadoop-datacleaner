@@ -19,6 +19,8 @@
  */
 package org.eobjects.hadoopdatacleaner.datastores;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -31,6 +33,8 @@ import org.apache.hadoop.io.WritableComparable;
 import org.eobjects.analyzer.data.InputColumn;
 import org.eobjects.analyzer.data.InputRow;
 import org.eobjects.analyzer.data.MockInputRow;
+
+import au.com.bytecode.opencsv.CSVReader;
 
 public class CsvParser {
 
@@ -74,12 +78,16 @@ public class CsvParser {
 
 	}
 
-	public InputRow prepareRow(Text csvLine) {
+	public InputRow prepareRow(Text csvLine) throws IOException {
 		if (usedColumns == null)
 			throw new IllegalStateException(
 					"The data row cannot be processed before the header row is processed. The  \"prepareHeaderRow\" needs to be called first.");
 
-		String[] values = csvLine.toString().split(";");
+		CSVReader reader = new CSVReader(new StringReader(csvLine.toString()));
+		
+		String[] values = reader.readNext();
+		
+		reader.close();
 
 		Iterator<InputColumn<?>> jobColumnsIterator = jobColumns.iterator();
 		Iterator<Boolean> usedColumnsIterator = usedColumns.iterator();

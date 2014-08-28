@@ -29,6 +29,7 @@ import org.eobjects.analyzer.connection.DatastoreCatalog;
 import org.eobjects.analyzer.connection.DatastoreCatalogImpl;
 import org.eobjects.analyzer.connection.PojoDatastore;
 import org.eobjects.analyzer.descriptors.ClasspathScanDescriptorProvider;
+import org.eobjects.analyzer.descriptors.SimpleDescriptorProvider;
 import org.apache.metamodel.pojo.ArrayTableDataProvider;
 import org.apache.metamodel.pojo.TableDataProvider;
 import org.apache.metamodel.util.SimpleTableDef;
@@ -36,21 +37,45 @@ import org.apache.metamodel.util.SimpleTableDef;
 public class SampleHBaseConfiguration {
 
     public static AnalyzerBeansConfiguration buildAnalyzerBeansConfiguration() {
-        List<TableDataProvider<?>> tableDataProviders = new ArrayList<TableDataProvider<?>>();
-        SimpleTableDef tableDef1 = new SimpleTableDef("countrycodes", new String[] { "mainFamily:country_name",
-                "mainFamily:iso2", "mainFamily:iso3" });
-        SimpleTableDef tableDef2 = new SimpleTableDef("countrycodes_output", new String[] { "mainFamily:country_name",
-                "mainFamily:iso2", "mainFamily:iso3" });
-        tableDataProviders.add(new ArrayTableDataProvider(tableDef1, new ArrayList<Object[]>()));
-        tableDataProviders.add(new ArrayTableDataProvider(tableDef2, new ArrayList<Object[]>()));
-        Datastore datastore = new PojoDatastore("countrycodes_hbase", "countrycodes_schema", tableDataProviders);
+        List<TableDataProvider<?>> inputTableDataProviders = new ArrayList<TableDataProvider<?>>();
+        List<TableDataProvider<?>> outputTableDataProviders = new ArrayList<TableDataProvider<?>>();
+        SimpleTableDef tableDef1 = new SimpleTableDef("input", new String[] { "mainFamily:id", "mainFamily:given_name",
+                "mainFamily:family_name", "mainFamily:full_address", "mainFamily:email", "mainFamily:phone" });
+        SimpleTableDef tableDef2 = new SimpleTableDef("output", new String[] { "mainFamily:id", "mainFamily:given_name",
+                "mainFamily:family_name", "mainFamily:full_address", "mainFamily:email", "mainFamily:phone" });
+        inputTableDataProviders.add(new ArrayTableDataProvider(tableDef1, new ArrayList<Object[]>()));
+        outputTableDataProviders.add(new ArrayTableDataProvider(tableDef2, new ArrayList<Object[]>()));
+        Datastore inputDatastore = new PojoDatastore("input_datastore", "input_schema", inputTableDataProviders);
+        Datastore outputDatastore = new PojoDatastore("output_datastore", "output_schema", outputTableDataProviders);
 
-        DatastoreCatalog datastoreCatalog = new DatastoreCatalogImpl(datastore);
+        DatastoreCatalog datastoreCatalog = new DatastoreCatalogImpl(inputDatastore, outputDatastore);
 
-        ClasspathScanDescriptorProvider descriptorProvider = new ClasspathScanDescriptorProvider();
-        descriptorProvider.scanPackage("org.eobjects", true);
-
-        return new AnalyzerBeansConfigurationImpl().replace(datastoreCatalog).replace(descriptorProvider);
+        List<String> transformers = new ArrayList<String>();
+		transformers.add("org.eobjects.analyzer.beans.transform.ConcatenatorTransformer");
+        transformers.add("com.hi.contacts.datacleaner.NameTransformer");
+        transformers.add("com.hi.contacts.datacleaner.EmailTransformer");
+        transformers.add("com.hi.contacts.datacleaner.AddressTransformer");
+        transformers.add("com.hi.contacts.datacleaner.PhoneTransformer");
+        transformers.add("org.eobjects.analyzer.beans.ParseJsonTransformer");
+        transformers.add("org.eobjects.analyzer.beans.ComposeJsonTransformer");
+        
+        List<String> filters = new ArrayList<String>();
+        filters.add("org.eobjects.analyzer.beans.filter.EqualsFilter");
+        filters.add("org.eobjects.analyzer.beans.filter.StringValueRangeFilter");
+        
+        List<String> analyzers = new ArrayList<String>();
+        analyzers.add("org.eobjects.analyzer.beans.writers.InsertIntoTableAnalyzer");
+        
+        SimpleDescriptorProvider descriptorProvider = new SimpleDescriptorProvider();
+        try {
+			descriptorProvider.setTransformerClassNames(transformers);
+			descriptorProvider.setFilterClassNames(filters);
+			descriptorProvider.setAnalyzerClassNames(analyzers);
+			return new AnalyzerBeansConfigurationImpl().replace(datastoreCatalog)
+					.replace(descriptorProvider);
+		} catch (ClassNotFoundException e) {
+			throw new IllegalStateException(e);
+		}
     }
 
 }

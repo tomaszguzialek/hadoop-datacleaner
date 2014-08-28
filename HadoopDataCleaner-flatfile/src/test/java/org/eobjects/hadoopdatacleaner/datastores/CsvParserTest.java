@@ -19,6 +19,7 @@
  */
 package org.eobjects.hadoopdatacleaner.datastores;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -51,7 +52,7 @@ public class CsvParserTest {
     }
 
     @Test
-    public void testParseHeaderRowAndDenmark() {
+    public void testParseHeaderRowAndDenmark() throws IOException {
         Text csvLine = new Text(
                 "Country name;ISO 3166-2;ISO 3166-3;ISO Numeric;Linked to country;Synonym1;Synonym2;Synonym3");
 
@@ -66,7 +67,7 @@ public class CsvParserTest {
 
         csvParser.parseHeaderRow(csvLine);
 
-        csvLine = new Text("Denmark;DK;DNK;208;;Danmark;Danemark;");
+        csvLine = new Text("Denmark,DK,DNK,208,,Danmark,Danemark,");
 
         expectedRow = new MockInputRow();
         expectedRow.put(new MockInputColumn<String>("Country name"), "Denmark");
