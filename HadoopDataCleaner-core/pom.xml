@@ -57,7 +57,7 @@
 		<dependency>
 			<groupId>org.eobjects.datacleaner</groupId>
 			<artifactId>DataCleaner-core</artifactId>
-			<version>3.5.11-apachemetamodel-SNAPSHOT</version>
+			<version>3.7-RC2</version>
 		</dependency>
 		
 		<dependency>

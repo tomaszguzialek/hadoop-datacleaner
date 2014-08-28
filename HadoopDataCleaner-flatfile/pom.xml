@@ -31,6 +31,10 @@
 					<groupId>org.slf4j</groupId>
 					<artifactId>log4j-over-slf4j</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>org.apache.metamodel</groupId>
+					<artifactId>MetaModel-hbase</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
