@@ -10,7 +10,6 @@
 		<module>HadoopDataCleaner-core</module>
 		<module>HadoopDataCleaner-flatfile</module>
 		<module>HadoopDataCleaner-hbase</module>
-		<module>HadoopDataCleaner-cassandra</module>
 	</modules>
 
 	<repositories>
