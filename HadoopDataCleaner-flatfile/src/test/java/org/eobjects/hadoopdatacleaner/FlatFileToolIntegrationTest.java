@@ -23,6 +23,8 @@ import java.io.File;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.metamodel.csv.CsvConfiguration;
+import org.apache.metamodel.util.FileResource;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfigurationImpl;
 import org.eobjects.analyzer.connection.CsvDatastore;
@@ -31,8 +33,6 @@ import org.eobjects.analyzer.connection.DatastoreCatalog;
 import org.eobjects.analyzer.connection.DatastoreCatalogImpl;
 import org.eobjects.analyzer.descriptors.ClasspathScanDescriptorProvider;
 import org.eobjects.hadoopdatacleaner.tools.FlatFileTool;
-import org.apache.metamodel.csv.CsvConfiguration;
-import org.apache.metamodel.util.FileResource;
 import org.junit.Assert;
 import org.junit.Test;
 
