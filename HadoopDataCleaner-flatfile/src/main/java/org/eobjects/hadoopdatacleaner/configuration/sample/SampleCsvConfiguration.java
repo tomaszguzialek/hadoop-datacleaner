@@ -39,15 +39,6 @@ import org.apache.metamodel.util.UrlResource;
 public class SampleCsvConfiguration {
 
     static {
-        // java.lang.StackOverflow workaround
-        // http://stackoverflow.com/questions/17360018/getting-stack-overflow-error-in-hadoop
-        Configuration conf = new Configuration();
-        try {
-            FileSystem.getFileSystemClass("file", conf);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
-        // The end of the workaround
         URL.setURLStreamHandlerFactory(new FsUrlStreamHandlerFactory());
     }
 

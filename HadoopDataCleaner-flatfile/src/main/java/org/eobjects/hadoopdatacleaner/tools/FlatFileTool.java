@@ -75,7 +75,7 @@ public final class FlatFileTool extends HadoopDataCleanerTool implements Tool {
     private int runMapReduceJob(String input, String output, Configuration mapReduceConfiguration) throws IOException,
             InterruptedException, ClassNotFoundException {
 
-        Job job = Job.getInstance(mapReduceConfiguration);
+        Job job = new Job(mapReduceConfiguration);
         job.setJarByClass(FlatFileMapper.class);
         job.setJobName(this.getClass().getName());
         
