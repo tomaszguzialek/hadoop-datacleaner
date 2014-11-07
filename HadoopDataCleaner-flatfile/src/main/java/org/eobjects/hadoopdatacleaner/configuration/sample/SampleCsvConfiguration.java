@@ -21,9 +21,11 @@ package org.eobjects.hadoopdatacleaner.configuration.sample;
 
 import java.net.URL;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FsUrlStreamHandlerFactory;
+import org.apache.metamodel.csv.CsvConfiguration;
+import org.apache.metamodel.util.FileResource;
+import org.apache.metamodel.util.Resource;
+import org.apache.metamodel.util.UrlResource;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfigurationImpl;
 import org.eobjects.analyzer.connection.CsvDatastore;
@@ -31,10 +33,6 @@ import org.eobjects.analyzer.connection.Datastore;
 import org.eobjects.analyzer.connection.DatastoreCatalog;
 import org.eobjects.analyzer.connection.DatastoreCatalogImpl;
 import org.eobjects.analyzer.descriptors.ClasspathScanDescriptorProvider;
-import org.apache.metamodel.csv.CsvConfiguration;
-import org.apache.metamodel.util.FileResource;
-import org.apache.metamodel.util.Resource;
-import org.apache.metamodel.util.UrlResource;
 
 public class SampleCsvConfiguration {
 
