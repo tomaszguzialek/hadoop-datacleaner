@@ -35,6 +35,9 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.apache.hadoop.mrunit.types.Pair;
+import org.apache.metamodel.pojo.ArrayTableDataProvider;
+import org.apache.metamodel.pojo.TableDataProvider;
+import org.apache.metamodel.util.SimpleTableDef;
 import org.eobjects.analyzer.beans.StringAnalyzer;
 import org.eobjects.analyzer.beans.transform.ConcatenatorTransformer;
 import org.eobjects.analyzer.beans.transform.TokenizerTransformer;
@@ -54,9 +57,6 @@ import org.eobjects.analyzer.job.builder.AnalyzerJobBuilder;
 import org.eobjects.analyzer.job.builder.TransformerJobBuilder;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.tools.HBaseTool;
-import org.apache.metamodel.pojo.ArrayTableDataProvider;
-import org.apache.metamodel.pojo.TableDataProvider;
-import org.apache.metamodel.util.SimpleTableDef;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -69,8 +69,6 @@ public class HBaseTableMapperTest {
 	public void setUp() {
 		AnalyzerBeansConfiguration analyzerBeansConfiguration = buildAnalyzerBeansConfiguration();
 		AnalysisJob analysisJob = buildAnalysisJob(analyzerBeansConfiguration);
-		String analyzerBeansConfigurationDatastores = ConfigurationSerializer
-				.serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfiguration);
 		String analysisJobXml = ConfigurationSerializer
 				.serializeAnalysisJobToXml(analyzerBeansConfiguration,
 						analysisJob);
@@ -84,9 +82,6 @@ public class HBaseTableMapperTest {
 						+ "org.apache.hadoop.hbase.mapreduce.MutationSerialization,"
 						+ "org.apache.hadoop.io.serializer.JavaSerialization,"
 						+ "org.apache.hadoop.io.serializer.WritableSerialization");
-		mapDriver.getConfiguration().set(
-				HBaseTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY,
-				analyzerBeansConfigurationDatastores);
 		mapDriver.getConfiguration().set(HBaseTool.ANALYSIS_JOB_XML_KEY,
 				analysisJobXml);
 	}
@@ -112,15 +107,15 @@ public class HBaseTableMapperTest {
 		Result inputResult = Result.create(cells);
 
 		SortedMapWritable expectedOutput = new SortedMapWritable();
-		expectedOutput.put(new Text("mainFamily:country_name"), new Text(
+		expectedOutput.put(new Text("countrycodes_schema.countrycodes.mainFamily:country_name"), new Text(
 				"Denmark"));
-		expectedOutput.put(new Text("mainFamily:iso2"), new Text("DK"));
+		expectedOutput.put(new Text("countrycodes_schema.countrycodes.mainFamily:iso2"), new Text("DK"));
 		expectedOutput
-				.put(new Text("mainFamily:iso2_iso3"), new Text("DK_DNK"));
-		expectedOutput.put(new Text("mainFamily:iso3"), new Text("DNK"));
+				.put(new Text("countrycodes_schema.countrycodes.mainFamily:iso2_iso3"), new Text("DK_DNK"));
+		expectedOutput.put(new Text("countrycodes_schema.countrycodes.mainFamily:iso3"), new Text("DNK"));
 
-		String expectedAnalyzerKey1 = "Value distribution (mainFamily:country_name)";
-		String expectedAnalyzerKey2 = "Value distribution (mainFamily:iso2)";
+		String expectedAnalyzerKey1 = "Value distribution (countrycodes_schema.countrycodes.mainFamily:country_name)";
+		String expectedAnalyzerKey2 = "Value distribution (countrycodes_schema.countrycodes.mainFamily:iso2)";
 
 		mapDriver.withInput(inputKey, inputResult);
 		List<Pair<Text, SortedMapWritable>> actualOutputs = mapDriver.run();
@@ -138,14 +133,16 @@ public class HBaseTableMapperTest {
 			Text expectedColumnName = (Text) mapEntry.getKey();
 			Text expectedColumnValue = (Text) mapEntry.getValue();
 
-			Assert.assertTrue(actualOutput1.getSecond().containsKey(
+			SortedMapWritable actualRow1 = actualOutput1.getSecond();
+			Assert.assertTrue(actualRow1.containsKey(
 					expectedColumnName));
-			Assert.assertEquals(expectedColumnValue, actualOutput1.getSecond()
+			Assert.assertEquals(expectedColumnValue, actualRow1
 					.get(expectedColumnName));
 
-			Assert.assertTrue(actualOutput2.getSecond().containsKey(
+			SortedMapWritable actualRow2 = actualOutput2.getSecond();
+			Assert.assertTrue(actualRow2.containsKey(
 					expectedColumnName));
-			Assert.assertEquals(expectedColumnValue, actualOutput2.getSecond()
+			Assert.assertEquals(expectedColumnValue, actualRow2
 					.get(expectedColumnName));
 		}
 	}

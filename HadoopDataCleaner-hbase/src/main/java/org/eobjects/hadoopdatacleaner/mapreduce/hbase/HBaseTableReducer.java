@@ -55,8 +55,8 @@ public class HBaseTableReducer extends
             org.apache.hadoop.mapreduce.Reducer</* KEYIN */Text, /* VALUEIN */SortedMapWritable, /* KEYOUT */NullWritable, /* VALUEOUT */Mutation>.Context context)
             throws IOException, InterruptedException {
         Configuration mapReduceConfiguration = context.getConfiguration();
-        String datastoresConfigurationLines = mapReduceConfiguration
-                .get(HadoopDataCleanerTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY);
+		String datastoresConfigurationLines = ConfigurationSerializer
+				.serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfiguration);
         String analysisJobXml = mapReduceConfiguration.get(HadoopDataCleanerTool.ANALYSIS_JOB_XML_KEY);
         analyzerBeansConfiguration = ConfigurationSerializer
                 .deserializeAnalyzerBeansDatastores(datastoresConfigurationLines);

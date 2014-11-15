@@ -22,6 +22,9 @@ package org.eobjects.hadoopdatacleaner.tools;
 import java.io.File;
 import java.io.IOException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -32,20 +35,20 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.job.AnalysisJob;
-import org.eobjects.hadoopdatacleaner.configuration.sample.SampleHBaseConfiguration;
 import org.eobjects.hadoopdatacleaner.mapreduce.hbase.HBaseTableMapper;
 import org.eobjects.hadoopdatacleaner.mapreduce.hbase.HBaseTableReducer;
+import org.xml.sax.SAXException;
 
 public final class HBaseTool extends HadoopDataCleanerTool implements Tool {
 
-    public HBaseTool(AnalyzerBeansConfiguration analyzerBeansConfiguration, AnalysisJob analysisJob) {
-        super(analyzerBeansConfiguration, analysisJob);
+    public HBaseTool(AnalysisJob analysisJob) {
+        super(analysisJob);
     }
     
-    public HBaseTool(AnalyzerBeansConfiguration analyzerBeansConfiguration, String analysisJobXml) throws IOException {
-        super(analyzerBeansConfiguration, analysisJobXml);
+	public HBaseTool(String analysisJobXml) throws IOException,
+			XPathExpressionException, ParserConfigurationException, SAXException {
+        super(analysisJobXml);
     }
 
     public int run(String[] args) throws Exception {
@@ -59,7 +62,6 @@ public final class HBaseTool extends HadoopDataCleanerTool implements Tool {
         }
 
         Configuration mapReduceConfiguration = HBaseConfiguration.create();
-        mapReduceConfiguration.set(ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY, analyzerBeansConfigurationDatastores);
         mapReduceConfiguration.set(ANALYSIS_JOB_XML_KEY, analysisJobXml);
 
         return runMapReduceJob(inputTableName, outputTableName, mapReduceConfiguration);
@@ -101,9 +103,8 @@ public final class HBaseTool extends HadoopDataCleanerTool implements Tool {
         if (args.length == 3) {
             analysisJobPath = args[0];
 
-            AnalyzerBeansConfiguration analyzerBeansConfiguration = SampleHBaseConfiguration.buildAnalyzerBeansConfiguration();
             String analysisJobXml = FileUtils.readFileToString(new File(analysisJobPath));
-            HBaseTool hBaseTool = new HBaseTool(analyzerBeansConfiguration, analysisJobXml);
+            HBaseTool hBaseTool = new HBaseTool(analysisJobXml);
             ToolRunner.run(hBaseTool, args);
         } else {
             System.err.println("Incorrect number of arguments. Expected: <analysisJobPath> <inputTableName> <outputTableName>");

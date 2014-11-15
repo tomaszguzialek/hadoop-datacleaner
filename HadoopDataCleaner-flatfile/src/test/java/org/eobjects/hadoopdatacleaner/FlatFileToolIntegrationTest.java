@@ -46,9 +46,8 @@ public class FlatFileToolIntegrationTest {
         args[0] = "src/test/resources/simplest_countrycodes_job.analysis.xml";
         args[1] = "src/test/resources/countrycodes.csv";
         args[2] = "output";
-        AnalyzerBeansConfiguration analyzerBeansConfiguration = buildAnalyzerBeansConfigurationLocalFS(args[1]);
         String analysisJobXml = FileUtils.readFileToString(new File(args[0]));
-        flatFileTool = new FlatFileTool(analyzerBeansConfiguration, analysisJobXml);
+        flatFileTool = new FlatFileTool(analysisJobXml);
         int exitCode = ToolRunner.run(flatFileTool, args);
         Assert.assertEquals("The exit code of the FlatFileTool should be 0.", 0, exitCode);
     }

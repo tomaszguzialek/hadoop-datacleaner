@@ -31,6 +31,8 @@ import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
 import org.apache.hadoop.mrunit.types.Pair;
+import org.apache.metamodel.csv.CsvConfiguration;
+import org.apache.metamodel.util.FileResource;
 import org.eobjects.analyzer.beans.StringAnalyzer;
 import org.eobjects.analyzer.beans.transform.ConcatenatorTransformer;
 import org.eobjects.analyzer.beans.transform.TokenizerTransformer;
@@ -50,8 +52,6 @@ import org.eobjects.analyzer.job.builder.AnalyzerJobBuilder;
 import org.eobjects.analyzer.job.builder.TransformerJobBuilder;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.tools.FlatFileTool;
-import org.apache.metamodel.csv.CsvConfiguration;
-import org.apache.metamodel.util.FileResource;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,19 +70,13 @@ public class FlatFileMapperReducerTest {
     public void setUp() {
         AnalyzerBeansConfiguration analyzerBeansConfiguration = buildAnalyzerBeansConfigurationLocalFS(CSV_FILE_PATH);
         analysisJob = buildAnalysisJob(analyzerBeansConfiguration, CSV_FILE_PATH);
-        String analyzerBeansConfigurationDatastores = ConfigurationSerializer
-                .serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfiguration);
         String analysisJobXml = ConfigurationSerializer.serializeAnalysisJobToXml(analyzerBeansConfiguration,
                 analysisJob);
         FlatFileMapper flatFileMapper = new FlatFileMapper();
         FlatFileReducer flatFileReducer = new FlatFileReducer();
         mapDriver = MapDriver.newMapDriver(flatFileMapper);
-        mapDriver.getConfiguration().set(FlatFileTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY,
-                analyzerBeansConfigurationDatastores);
         mapDriver.getConfiguration().set(FlatFileTool.ANALYSIS_JOB_XML_KEY, analysisJobXml);
         reduceDriver = ReduceDriver.newReduceDriver(flatFileReducer);
-        reduceDriver.getConfiguration().set(FlatFileTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY,
-                analyzerBeansConfigurationDatastores);
         reduceDriver.getConfiguration().set(FlatFileTool.ANALYSIS_JOB_XML_KEY, analysisJobXml);
         mapReduceDriver = MapReduceDriver.newMapReduceDriver(flatFileMapper, flatFileReducer);
     }

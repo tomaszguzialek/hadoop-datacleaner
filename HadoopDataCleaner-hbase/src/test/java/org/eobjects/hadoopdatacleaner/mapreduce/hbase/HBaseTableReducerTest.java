@@ -33,6 +33,9 @@ import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
 import org.apache.hadoop.mrunit.types.Pair;
+import org.apache.metamodel.pojo.ArrayTableDataProvider;
+import org.apache.metamodel.pojo.TableDataProvider;
+import org.apache.metamodel.util.SimpleTableDef;
 import org.eobjects.analyzer.beans.StringAnalyzer;
 import org.eobjects.analyzer.beans.transform.ConcatenatorTransformer;
 import org.eobjects.analyzer.beans.transform.TokenizerTransformer;
@@ -52,9 +55,6 @@ import org.eobjects.analyzer.job.builder.AnalyzerJobBuilder;
 import org.eobjects.analyzer.job.builder.TransformerJobBuilder;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.tools.HBaseTool;
-import org.apache.metamodel.pojo.ArrayTableDataProvider;
-import org.apache.metamodel.pojo.TableDataProvider;
-import org.apache.metamodel.util.SimpleTableDef;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -73,8 +73,6 @@ public class HBaseTableReducerTest {
 	public void setUp() {
 		AnalyzerBeansConfiguration analyzerBeansConfiguration = buildAnalyzerBeansConfiguration();
 		AnalysisJob analysisJob = buildAnalysisJob(analyzerBeansConfiguration);
-		String analyzerBeansConfigurationDatastores = ConfigurationSerializer
-				.serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfiguration);
 		String analysisJobXml = ConfigurationSerializer
 				.serializeAnalysisJobToXml(analyzerBeansConfiguration,
 						analysisJob);
@@ -88,9 +86,6 @@ public class HBaseTableReducerTest {
 								+ "org.apache.hadoop.hbase.mapreduce.MutationSerialization,"
 								+ "org.apache.hadoop.io.serializer.JavaSerialization,"
 								+ "org.apache.hadoop.io.serializer.WritableSerialization");
-		reduceDriver.getConfiguration().set(
-				HBaseTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY,
-				analyzerBeansConfigurationDatastores);
 		reduceDriver.getConfiguration().set(HBaseTool.ANALYSIS_JOB_XML_KEY,
 				analysisJobXml);
 	}

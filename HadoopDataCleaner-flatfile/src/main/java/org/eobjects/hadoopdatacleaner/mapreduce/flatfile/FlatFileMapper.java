@@ -21,12 +21,18 @@ package org.eobjects.hadoopdatacleaner.mapreduce.flatfile;
 
 import java.io.IOException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.data.InputRow;
+import org.eobjects.hadoopdatacleaner.configuration.AnalyzerBeansConfigurationHelper;
+import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.datastores.CsvParser;
 import org.eobjects.hadoopdatacleaner.mapreduce.MapperDelegate;
 import org.eobjects.hadoopdatacleaner.mapreduce.MapperEmitter;
@@ -34,6 +40,7 @@ import org.eobjects.hadoopdatacleaner.mapreduce.MapperEmitter.Callback;
 import org.eobjects.hadoopdatacleaner.tools.FlatFileTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 public class FlatFileMapper extends Mapper<LongWritable, Text, Text, SortedMapWritable> {
 
@@ -47,12 +54,24 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, Text, SortedMapWr
     protected void setup(Mapper<LongWritable, Text, Text, SortedMapWritable>.Context context) throws IOException,
             InterruptedException {
         Configuration mapReduceConfiguration = context.getConfiguration();
-        String datastoresConfigurationLines = mapReduceConfiguration
-                .get(FlatFileTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY);
         String analysisJobXml = mapReduceConfiguration.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
-        this.mapperDelegate = new MapperDelegate(datastoresConfigurationLines, analysisJobXml);
-        csvParser = new CsvParser(mapperDelegate.getAnalysisJob().getSourceColumns(), ";");
-        super.setup(context);
+        AnalyzerBeansConfiguration analyzerBeansConfiguration;
+		try {
+			analyzerBeansConfiguration = AnalyzerBeansConfigurationHelper.build(analysisJobXml);
+			String datastoresConfigurationLines = ConfigurationSerializer.serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfiguration);
+			this.mapperDelegate = new MapperDelegate(datastoresConfigurationLines, analysisJobXml);
+			csvParser = new CsvParser(mapperDelegate.getAnalysisJob().getSourceColumns(), ";");
+			super.setup(context);
+		} catch (XPathExpressionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
     @Override

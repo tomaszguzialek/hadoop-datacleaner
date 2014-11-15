@@ -21,6 +21,9 @@ package org.eobjects.hadoopdatacleaner.mapreduce.flatfile;
 
 import java.io.IOException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SortedMapWritable;
@@ -31,12 +34,14 @@ import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.data.InputRow;
 import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.analyzer.result.AnalyzerResult;
+import org.eobjects.hadoopdatacleaner.configuration.AnalyzerBeansConfigurationHelper;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.datastores.CsvParser;
 import org.eobjects.hadoopdatacleaner.datastores.RowUtils;
 import org.eobjects.hadoopdatacleaner.tools.FlatFileTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 public class FlatFileReducer extends Reducer<Text, SortedMapWritable, NullWritable, Text> {
 
@@ -49,13 +54,21 @@ public class FlatFileReducer extends Reducer<Text, SortedMapWritable, NullWritab
     protected void setup(Reducer<Text, SortedMapWritable, NullWritable, Text>.Context context) throws IOException,
             InterruptedException {
         Configuration mapReduceConfiguration = context.getConfiguration();
-        String datastoresConfigurationLines = mapReduceConfiguration
-                .get(FlatFileTool.ANALYZER_BEANS_CONFIGURATION_DATASTORES_KEY);
         String analysisJobXml = mapReduceConfiguration.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
-        analyzerBeansConfiguration = ConfigurationSerializer
-                .deserializeAnalyzerBeansDatastores(datastoresConfigurationLines);
-        analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
-        super.setup(context);
+        try {
+			analyzerBeansConfiguration = AnalyzerBeansConfigurationHelper.build(analysisJobXml);
+			analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
+			super.setup(context);
+		} catch (XPathExpressionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
     @Override
