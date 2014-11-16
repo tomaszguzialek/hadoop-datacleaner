@@ -104,20 +104,6 @@ public class HBaseTableMapperTest {
 		cells.add(cell);
 		Result inputResult = Result.create(cells);
 
-		SortedMapWritable expectedOutput = new SortedMapWritable();
-		expectedOutput.put(new Text(
-				"countrycodes_schema.countrycodes.mainFamily:country_name"),
-				new Text("Denmark"));
-		expectedOutput.put(new Text(
-				"countrycodes_schema.countrycodes.mainFamily:iso2"), new Text(
-				"DK"));
-		expectedOutput.put(new Text(
-				"countrycodes_schema.countrycodes.mainFamily:iso2_iso3"),
-				new Text("DK_DNK"));
-		expectedOutput.put(new Text(
-				"countrycodes_schema.countrycodes.mainFamily:iso3"), new Text(
-				"DNK"));
-
 		String expectedAnalyzerKey1 = "Value distribution (mainFamily:country_name)";
 		String expectedAnalyzerKey2 = "Value distribution (mainFamily:iso2)";
 

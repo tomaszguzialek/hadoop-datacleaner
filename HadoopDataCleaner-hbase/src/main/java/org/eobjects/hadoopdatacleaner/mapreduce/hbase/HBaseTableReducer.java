@@ -21,6 +21,9 @@ package org.eobjects.hadoopdatacleaner.mapreduce.hbase;
 
 import java.io.IOException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
@@ -34,12 +37,14 @@ import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
 import org.eobjects.analyzer.data.InputRow;
 import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.analyzer.result.AnalyzerResult;
+import org.eobjects.hadoopdatacleaner.configuration.AnalyzerBeansConfigurationHelper;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.datastores.ResultUtils;
 import org.eobjects.hadoopdatacleaner.datastores.RowUtils;
 import org.eobjects.hadoopdatacleaner.tools.HadoopDataCleanerTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 public class HBaseTableReducer extends
         TableReducer</* KEYIN */Text, /* VALUEIN */SortedMapWritable, /* KEYOUT */NullWritable> {
@@ -55,12 +60,20 @@ public class HBaseTableReducer extends
             org.apache.hadoop.mapreduce.Reducer</* KEYIN */Text, /* VALUEIN */SortedMapWritable, /* KEYOUT */NullWritable, /* VALUEOUT */Mutation>.Context context)
             throws IOException, InterruptedException {
         Configuration mapReduceConfiguration = context.getConfiguration();
-		String datastoresConfigurationLines = ConfigurationSerializer
-				.serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfiguration);
         String analysisJobXml = mapReduceConfiguration.get(HadoopDataCleanerTool.ANALYSIS_JOB_XML_KEY);
-        analyzerBeansConfiguration = ConfigurationSerializer
-                .deserializeAnalyzerBeansDatastores(datastoresConfigurationLines);
-        analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
+        try {
+			analyzerBeansConfiguration = AnalyzerBeansConfigurationHelper.build(analysisJobXml);
+			analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
+		} catch (XPathExpressionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         super.setup(context);
     }
 
