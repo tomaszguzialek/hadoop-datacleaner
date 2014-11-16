@@ -35,17 +35,12 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.hadoopdatacleaner.mapreduce.hbase.HBaseTableMapper;
 import org.eobjects.hadoopdatacleaner.mapreduce.hbase.HBaseTableReducer;
 import org.xml.sax.SAXException;
 
 public final class HBaseTool extends HadoopDataCleanerTool implements Tool {
 
-    public HBaseTool(AnalysisJob analysisJob) {
-        super(analysisJob);
-    }
-    
 	public HBaseTool(String analysisJobXml) throws IOException,
 			XPathExpressionException, ParserConfigurationException, SAXException {
         super(analysisJobXml);

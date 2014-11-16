@@ -30,22 +30,23 @@ import org.apache.hadoop.io.WritableComparable;
 import org.eobjects.analyzer.data.InputColumn;
 import org.eobjects.analyzer.data.InputRow;
 import org.eobjects.analyzer.data.MockInputRow;
-import org.slf4j.Logger;
 
 public class RowUtils {
 
-    public static void printSortedMapWritable(SortedMapWritable row, Logger logger) {
-        logger.info("Row: ");
+    public static String sortedMapWritableToString(SortedMapWritable row) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Row:\n");
         for (@SuppressWarnings("rawtypes")
         Map.Entry<WritableComparable, Writable> entry : row.entrySet()) {
             Text columnName = (Text) entry.getKey();
             if (entry.getValue() instanceof Text) {
                 Text columnValue = (Text) entry.getValue();
-                logger.info("\t" + columnName + " = " + columnValue);
+                sb.append("\t" + columnName + " = " + columnValue + "\n");
             } else {
-                logger.info("\t" + columnName + " = " + null);
+                sb.append("\t" + columnName + " = null\n");
             }
         }
+        return sb.toString();
     }
 
     public static SortedMapWritable inputRowToSortedMapWritable(InputRow inputRow) {

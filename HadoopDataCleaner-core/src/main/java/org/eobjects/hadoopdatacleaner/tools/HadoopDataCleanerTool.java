@@ -27,9 +27,7 @@ import javax.xml.xpath.XPathExpressionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
-import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.hadoopdatacleaner.configuration.AnalyzerBeansConfigurationHelper;
-import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.xml.sax.SAXException;
 
 public class HadoopDataCleanerTool extends Configured {
@@ -39,14 +37,6 @@ public class HadoopDataCleanerTool extends Configured {
 	protected AnalyzerBeansConfiguration analyzerBeansConfiguration;
 
 	protected String analysisJobXml;
-
-	public HadoopDataCleanerTool(AnalysisJob analysisJob) {
-		this.analyzerBeansConfiguration = AnalyzerBeansConfigurationHelper
-				.build(analysisJob);
-		this.analysisJobXml = ConfigurationSerializer
-				.serializeAnalysisJobToXml(analyzerBeansConfiguration,
-						analysisJob);
-	}
 
 	public HadoopDataCleanerTool(String analysisJobXml) throws IOException,
 			XPathExpressionException, ParserConfigurationException,

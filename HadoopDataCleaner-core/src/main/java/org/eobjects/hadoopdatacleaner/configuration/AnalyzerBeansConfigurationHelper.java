@@ -24,10 +24,8 @@ import org.eobjects.analyzer.connection.Datastore;
 import org.eobjects.analyzer.connection.DatastoreCatalog;
 import org.eobjects.analyzer.connection.DatastoreCatalogImpl;
 import org.eobjects.analyzer.connection.PojoDatastore;
-import org.eobjects.analyzer.data.InputColumn;
 import org.eobjects.analyzer.descriptors.ClasspathScanDescriptorProvider;
 import org.eobjects.analyzer.descriptors.DescriptorProvider;
-import org.eobjects.analyzer.job.AnalysisJob;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -36,10 +34,6 @@ import org.xml.sax.SAXException;
 public class AnalyzerBeansConfigurationHelper {
 
 	private static final String[] DEFAULT_PACKAGES = new String[] { "org.eobjects" };
-
-	public static AnalyzerBeansConfiguration build(AnalysisJob analysisJob) {
-		return build(analysisJob, getDefaultDescriptorProvider());
-	}
 
 	public static AnalyzerBeansConfiguration build(String analysisJobXml)
 			throws XPathExpressionException, ParserConfigurationException,
@@ -53,38 +47,31 @@ public class AnalyzerBeansConfigurationHelper {
 			SAXException, IOException {
 
 		String datastoreName = getDatastoreName(analysisJobXml);
-		String[] sourceColumns = getSourceColumns(analysisJobXml);
+		String[] fullyQualifiedSourceColumnNames = getFullyQualifiedSourceColumnNames(analysisJobXml);
+		String schemaName = getSchemaName(fullyQualifiedSourceColumnNames[0]);
+		String[] tableNames = getTableNames(fullyQualifiedSourceColumnNames);
 
-		return build(datastoreName, sourceColumns, descriptorProvider);
+		return build(datastoreName, schemaName, tableNames, fullyQualifiedSourceColumnNames,
+				descriptorProvider);
 	}
 
-	public static AnalyzerBeansConfiguration build(AnalysisJob analysisJob,
+	public static AnalyzerBeansConfiguration build(String datastoreName,
+			String schemaName, String[] tableNames, String[] columnNames) {
+		return build(datastoreName, schemaName, tableNames, columnNames,
+				getDefaultDescriptorProvider());
+	}
+
+	public static AnalyzerBeansConfiguration build(String datastoreName,
+			String schemaName, String[] tableNames, String[] columnNames,
 			DescriptorProvider descriptorProvider) {
-		String datastoreName = analysisJob.getDatastore().getName();
-		List<InputColumn<?>> sourceColumns = analysisJob.getSourceColumns();
-
-		String[] columnNames = new String[sourceColumns.size()];
-		int i = 0;
-		for (InputColumn<?> inputColumn : sourceColumns) {
-			columnNames[i++] = inputColumn.getName();
-		}
-
-		return build(datastoreName, columnNames, descriptorProvider);
-	}
-
-	public static AnalyzerBeansConfiguration build(String datastoreName,
-			String[] columnNames) {
-		return build(datastoreName, columnNames, getDefaultDescriptorProvider());
-	}
-
-	public static AnalyzerBeansConfiguration build(String datastoreName,
-			String[] columnNames, DescriptorProvider descriptorProvider) {
 		List<TableDataProvider<?>> tableDataProviders = new ArrayList<TableDataProvider<?>>();
-		SimpleTableDef inputTableDef = new SimpleTableDef(datastoreName,
-				columnNames);
-		tableDataProviders.add(new ArrayTableDataProvider(inputTableDef,
-				new ArrayList<Object[]>()));
-		Datastore datastore = new PojoDatastore(datastoreName, datastoreName,
+		for (String tableName : tableNames) {
+			SimpleTableDef inputTableDef = new SimpleTableDef(tableName,
+					columnNames);
+			tableDataProviders.add(new ArrayTableDataProvider(inputTableDef,
+					new ArrayList<Object[]>()));
+		}
+		Datastore datastore = new PojoDatastore(datastoreName, schemaName,
 				tableDataProviders);
 
 		DatastoreCatalog datastoreCatalog = new DatastoreCatalogImpl(datastore);
@@ -113,9 +100,10 @@ public class AnalyzerBeansConfigurationHelper {
 		return datastoreName;
 	}
 
-	private static String[] getSourceColumns(String analysisJobXml)
-			throws XPathExpressionException, UnsupportedEncodingException,
-			SAXException, IOException, ParserConfigurationException {
+	private static String[] getFullyQualifiedSourceColumnNames(
+			String analysisJobXml) throws XPathExpressionException,
+			UnsupportedEncodingException, SAXException, IOException,
+			ParserConfigurationException {
 		DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance()
 				.newDocumentBuilder();
 		Document document = documentBuilder.parse(new ByteArrayInputStream(
@@ -127,14 +115,35 @@ public class AnalyzerBeansConfigurationHelper {
 
 		NodeList columnNodes = (NodeList) xPathExpression.evaluate(document,
 				XPathConstants.NODESET);
-		
+
 		List<String> columnNames = new ArrayList<String>();
 		for (int i = 0; i < columnNodes.getLength(); i++) {
 			Node columnNode = columnNodes.item(i);
-			Node pathAttributeNode = columnNode.getAttributes().getNamedItem("path");
+			Node pathAttributeNode = columnNode.getAttributes().getNamedItem(
+					"path");
 			columnNames.add(pathAttributeNode.getNodeValue());
 		}
 		return columnNames.toArray(new String[columnNodes.getLength()]);
+	}
+
+	private static String getSchemaName(String fullyQualifiedSourceColumnName) {
+		String[] split = fullyQualifiedSourceColumnName.split("\\.");
+		assert split.length > 2;
+		return split[0];
+	}
+	
+	private static String[] getTableNames(
+			String[] fullyQualifiedSourceColumnNames) {
+		List<String> tableNames = new ArrayList<String>();
+		for (String fullyQualifiedSourceColumnName : fullyQualifiedSourceColumnNames) {
+			String[] split = fullyQualifiedSourceColumnName.split("\\.");
+			assert split.length > 2;
+			String tableName = split[1];
+			if (!tableNames.contains(tableName)) {
+				tableNames.add(tableName);
+			}
+		}
+		return tableNames.toArray(new String[tableNames.size()]);
 	}
 
 	private static ClasspathScanDescriptorProvider getDefaultDescriptorProvider() {

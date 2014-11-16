@@ -83,7 +83,7 @@ public class FlatFileReducer extends Reducer<Text, SortedMapWritable, NullWritab
             InputRow inputRow = RowUtils.sortedMapWritableToInputRow(rowWritable, analysisJob.getSourceColumns());
             analyzer.run(inputRow, 1);
 
-            RowUtils.printSortedMapWritable(rowWritable, logger);
+            logger.debug(RowUtils.sortedMapWritableToString(rowWritable));
 
             Text finalText = CsvParser.toCsvText(rowWritable);
             context.write(NullWritable.get(), finalText);

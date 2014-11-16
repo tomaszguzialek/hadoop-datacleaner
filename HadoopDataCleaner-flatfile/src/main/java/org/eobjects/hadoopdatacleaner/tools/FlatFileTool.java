@@ -20,7 +20,6 @@
 package org.eobjects.hadoopdatacleaner.tools;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -38,17 +37,11 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.eobjects.analyzer.job.AnalysisJob;
 import org.eobjects.hadoopdatacleaner.mapreduce.flatfile.FlatFileMapper;
 import org.eobjects.hadoopdatacleaner.mapreduce.flatfile.FlatFileReducer;
 import org.xml.sax.SAXException;
 
 public final class FlatFileTool extends HadoopDataCleanerTool implements Tool {
-
-	public FlatFileTool(AnalysisJob analysisJob) throws FileNotFoundException {
-
-		super(analysisJob);
-	}
 
 	public FlatFileTool(String analysisJobXml) throws IOException,
 			XPathExpressionException, ParserConfigurationException,

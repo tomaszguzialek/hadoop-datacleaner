@@ -128,10 +128,13 @@ public class ConfigurationSerializer {
 				datastoresOutputBuilder.append(",");
 				datastoresOutputBuilder.append(table.getName());
 				datastoresOutputBuilder.append(",");
-				String[] columnNames = table.getColumnNames();
-				for (int i = 0; i < columnNames.length; i++) {
-					datastoresOutputBuilder.append(columnNames[i]);
-					if (i == columnNames.length - 1)
+				String[] fullyQualifiedColumnNames = table.getColumnNames();
+				for (int i = 0; i < fullyQualifiedColumnNames.length; i++) {
+					String[] split = fullyQualifiedColumnNames[i].split("\\.");
+					assert split.length > 2;
+					String columnName = split[2];
+					datastoresOutputBuilder.append(columnName);
+					if (i == fullyQualifiedColumnNames.length - 1)
 						datastoresOutputBuilder.append("\n");
 					else
 						datastoresOutputBuilder.append(",");

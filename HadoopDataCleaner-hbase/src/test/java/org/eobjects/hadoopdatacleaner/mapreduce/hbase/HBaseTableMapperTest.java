@@ -22,7 +22,6 @@ package org.eobjects.hadoopdatacleaner.mapreduce.hbase;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
@@ -31,8 +30,6 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.apache.hadoop.mrunit.types.Pair;
 import org.apache.metamodel.pojo.ArrayTableDataProvider;
@@ -56,6 +53,7 @@ import org.eobjects.analyzer.job.builder.AnalysisJobBuilder;
 import org.eobjects.analyzer.job.builder.AnalyzerJobBuilder;
 import org.eobjects.analyzer.job.builder.TransformerJobBuilder;
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
+import org.eobjects.hadoopdatacleaner.datastores.RowUtils;
 import org.eobjects.hadoopdatacleaner.tools.HBaseTool;
 import org.junit.Assert;
 import org.junit.Before;
@@ -78,10 +76,10 @@ public class HBaseTableMapperTest {
 				.getConfiguration()
 				.set("io.serializations",
 						"org.apache.hadoop.hbase.mapreduce.ResultSerialization,"
-						+ "org.apache.hadoop.hbase.mapreduce.KeyValueSerialization,"
-						+ "org.apache.hadoop.hbase.mapreduce.MutationSerialization,"
-						+ "org.apache.hadoop.io.serializer.JavaSerialization,"
-						+ "org.apache.hadoop.io.serializer.WritableSerialization");
+								+ "org.apache.hadoop.hbase.mapreduce.KeyValueSerialization,"
+								+ "org.apache.hadoop.hbase.mapreduce.MutationSerialization,"
+								+ "org.apache.hadoop.io.serializer.JavaSerialization,"
+								+ "org.apache.hadoop.io.serializer.WritableSerialization");
 		mapDriver.getConfiguration().set(HBaseTool.ANALYSIS_JOB_XML_KEY,
 				analysisJobXml);
 	}
@@ -107,15 +105,21 @@ public class HBaseTableMapperTest {
 		Result inputResult = Result.create(cells);
 
 		SortedMapWritable expectedOutput = new SortedMapWritable();
-		expectedOutput.put(new Text("countrycodes_schema.countrycodes.mainFamily:country_name"), new Text(
-				"Denmark"));
-		expectedOutput.put(new Text("countrycodes_schema.countrycodes.mainFamily:iso2"), new Text("DK"));
-		expectedOutput
-				.put(new Text("countrycodes_schema.countrycodes.mainFamily:iso2_iso3"), new Text("DK_DNK"));
-		expectedOutput.put(new Text("countrycodes_schema.countrycodes.mainFamily:iso3"), new Text("DNK"));
+		expectedOutput.put(new Text(
+				"countrycodes_schema.countrycodes.mainFamily:country_name"),
+				new Text("Denmark"));
+		expectedOutput.put(new Text(
+				"countrycodes_schema.countrycodes.mainFamily:iso2"), new Text(
+				"DK"));
+		expectedOutput.put(new Text(
+				"countrycodes_schema.countrycodes.mainFamily:iso2_iso3"),
+				new Text("DK_DNK"));
+		expectedOutput.put(new Text(
+				"countrycodes_schema.countrycodes.mainFamily:iso3"), new Text(
+				"DNK"));
 
-		String expectedAnalyzerKey1 = "Value distribution (countrycodes_schema.countrycodes.mainFamily:country_name)";
-		String expectedAnalyzerKey2 = "Value distribution (countrycodes_schema.countrycodes.mainFamily:iso2)";
+		String expectedAnalyzerKey1 = "Value distribution (mainFamily:country_name)";
+		String expectedAnalyzerKey2 = "Value distribution (mainFamily:iso2)";
 
 		mapDriver.withInput(inputKey, inputResult);
 		List<Pair<Text, SortedMapWritable>> actualOutputs = mapDriver.run();
@@ -127,24 +131,15 @@ public class HBaseTableMapperTest {
 				.toString());
 		Assert.assertEquals(expectedAnalyzerKey2, actualOutput2.getFirst()
 				.toString());
-		for (@SuppressWarnings("rawtypes")
-		Map.Entry<WritableComparable, Writable> mapEntry : expectedOutput
-				.entrySet()) {
-			Text expectedColumnName = (Text) mapEntry.getKey();
-			Text expectedColumnValue = (Text) mapEntry.getValue();
 
-			SortedMapWritable actualRow1 = actualOutput1.getSecond();
-			Assert.assertTrue(actualRow1.containsKey(
-					expectedColumnName));
-			Assert.assertEquals(expectedColumnValue, actualRow1
-					.get(expectedColumnName));
-
-			SortedMapWritable actualRow2 = actualOutput2.getSecond();
-			Assert.assertTrue(actualRow2.containsKey(
-					expectedColumnName));
-			Assert.assertEquals(expectedColumnValue, actualRow2
-					.get(expectedColumnName));
-		}
+		Assert.assertEquals(
+				"Row:" +
+				"\n\tmainFamily:country_name = Denmark" +
+				"\n\tmainFamily:iso2 = DK" +
+				"\n\tmainFamily:iso2_iso3 = DK_DNK" +
+				"\n\tmainFamily:iso3 = DNK" +
+				"\n",
+				RowUtils.sortedMapWritableToString(actualOutput1.getSecond()));
 	}
 
 	public static AnalyzerBeansConfiguration buildAnalyzerBeansConfiguration() {
