@@ -107,7 +107,7 @@ public class HBaseTableReducerTest {
 		inputRow.put(new Text("mainFamily:iso3"), new Text("POL"));
 		inputRows.add(inputRow);
 
-		String inputAnalyzerKey1 = "Value distribution (countrycodes_schema.countrycodes.mainFamily:country_name)";
+		String inputAnalyzerKey1 = "Value distribution (mainFamily:country_name)";
 
 		reduceDriver.withInput(new Text(inputAnalyzerKey1), inputRows);
 		List<Pair<NullWritable, Mutation>> actualOutputs = reduceDriver.run();

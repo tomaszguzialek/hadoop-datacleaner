@@ -128,13 +128,10 @@ public class ConfigurationSerializer {
 				datastoresOutputBuilder.append(",");
 				datastoresOutputBuilder.append(table.getName());
 				datastoresOutputBuilder.append(",");
-				String[] fullyQualifiedColumnNames = table.getColumnNames();
-				for (int i = 0; i < fullyQualifiedColumnNames.length; i++) {
-					String[] split = fullyQualifiedColumnNames[i].split("\\.");
-					assert split.length > 2;
-					String columnName = split[2];
-					datastoresOutputBuilder.append(columnName);
-					if (i == fullyQualifiedColumnNames.length - 1)
+				String[] columnNames = table.getColumnNames();
+				for (int i = 0; i < columnNames.length; i++) {
+					datastoresOutputBuilder.append(columnNames[i]);
+					if (i == columnNames.length - 1)
 						datastoresOutputBuilder.append("\n");
 					else
 						datastoresOutputBuilder.append(",");
@@ -169,26 +166,31 @@ public class ConfigurationSerializer {
 		AnalyzerJob analyzerJob = null;
 
 		for (AnalyzerJob analyzerJobIter : analysisJob.getAnalyzerJobs()) {
-			if (LabelUtils.getLabel(analyzerJobIter).equals(
-					analyzerKey.toString())) {
+			String analyzerLabel = LabelUtils.getLabel(analyzerJobIter);
+			if (analyzerLabel.equals(analyzerKey.toString())) {
 				analyzerJob = analyzerJobIter;
 				break;
 			}
 		}
 
-		Analyzer<?> analyzer = ReflectionUtils.newInstance(analyzerJob
-				.getDescriptor().getComponentClass());
-		LifeCycleHelper lifeCycleHelper = new LifeCycleHelper(
-				analyzerBeansConfiguration.getInjectionManager(analysisJob),
-				true);
-		lifeCycleHelper.assignConfiguredProperties(analyzerJob.getDescriptor(),
-				analyzer, analyzerJob.getConfiguration());
-		lifeCycleHelper.assignProvidedProperties(analyzerJob.getDescriptor(),
-				analyzer);
-		lifeCycleHelper.validate(analyzerJob.getDescriptor(), analyzer);
-		lifeCycleHelper.initialize(analyzerJob.getDescriptor(), analyzer);
-
-		return analyzer;
+		if (analyzerJob != null) {
+			Analyzer<?> analyzer = ReflectionUtils.newInstance(analyzerJob
+					.getDescriptor().getComponentClass());
+			LifeCycleHelper lifeCycleHelper = new LifeCycleHelper(
+					analyzerBeansConfiguration.getInjectionManager(analysisJob),
+					true);
+			lifeCycleHelper.assignConfiguredProperties(
+					analyzerJob.getDescriptor(), analyzer,
+					analyzerJob.getConfiguration());
+			lifeCycleHelper.assignProvidedProperties(
+					analyzerJob.getDescriptor(), analyzer);
+			lifeCycleHelper.validate(analyzerJob.getDescriptor(), analyzer);
+			lifeCycleHelper.initialize(analyzerJob.getDescriptor(), analyzer);
+			return analyzer;
+		} else {
+			throw new IllegalArgumentException("Specified analyzer key: "
+					+ analyzerKey + "has not been found in the analysis job.");
+		}
 	}
 
 }

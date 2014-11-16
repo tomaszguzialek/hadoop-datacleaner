@@ -48,10 +48,11 @@ public class AnalyzerBeansConfigurationHelper {
 
 		String datastoreName = getDatastoreName(analysisJobXml);
 		String[] fullyQualifiedSourceColumnNames = getFullyQualifiedSourceColumnNames(analysisJobXml);
+		String[] sourceColumnNames = getSourceColumnNames(fullyQualifiedSourceColumnNames);
 		String schemaName = getSchemaName(fullyQualifiedSourceColumnNames[0]);
 		String[] tableNames = getTableNames(fullyQualifiedSourceColumnNames);
 
-		return build(datastoreName, schemaName, tableNames, fullyQualifiedSourceColumnNames,
+		return build(datastoreName, schemaName, tableNames, sourceColumnNames,
 				descriptorProvider);
 	}
 
@@ -124,6 +125,17 @@ public class AnalyzerBeansConfigurationHelper {
 			columnNames.add(pathAttributeNode.getNodeValue());
 		}
 		return columnNames.toArray(new String[columnNodes.getLength()]);
+	}
+	
+	private static String[] getSourceColumnNames(
+			String[] fullyQualifiedSourceColumnNames) {
+		List<String> sourceColumnNames = new ArrayList<String>();
+		for (String fullyQualifiedSourceColumnName : fullyQualifiedSourceColumnNames) {
+			String[] split = fullyQualifiedSourceColumnName.split("\\.");
+			assert split.length > 2;
+			sourceColumnNames.add(split[2]);
+		}
+		return sourceColumnNames.toArray(new String[sourceColumnNames.size()]);
 	}
 
 	private static String getSchemaName(String fullyQualifiedSourceColumnName) {
