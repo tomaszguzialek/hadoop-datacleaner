@@ -102,7 +102,8 @@ public class FlatFileMapperReducerTest {
 
 		List<Pair<Text, SortedMapWritable>> actualOutputs = mapDriver.run();
 
-		Assert.assertEquals(2, actualOutputs.size());
+		// Only one as the header is consumed and not emitted
+		Assert.assertEquals(1, actualOutputs.size());
 
 		Pair<Text, SortedMapWritable> actualOutputPoland = actualOutputs.get(0);
 		actualOutputPoland.getSecond().containsValue("Utrechtseweg 310");

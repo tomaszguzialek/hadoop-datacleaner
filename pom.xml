@@ -42,7 +42,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<hadoop.version>2.3.0-cdh5.1.0</hadoop.version>
-		<analyzerbeans.version>1.0-RC2</analyzerbeans.version>
+		<analyzerbeans.version>1.0.5</analyzerbeans.version>
+		<datacleaner.version>3.7</datacleaner.version>
 		<mrunit.version>1.1.0</mrunit.version>
 	</properties>
 

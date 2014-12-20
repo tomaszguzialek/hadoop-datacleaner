@@ -27,53 +27,67 @@ import org.apache.hadoop.io.SortedMapWritable;
 import org.apache.hadoop.io.Text;
 import org.eobjects.analyzer.data.InputRow;
 import org.eobjects.analyzer.job.AnalyzerJob;
-import org.eobjects.analyzer.job.Outcome;
+import org.eobjects.analyzer.job.ComponentRequirement;
+import org.eobjects.analyzer.job.FilterOutcome;
 import org.eobjects.analyzer.job.runner.ConsumeRowResult;
-import org.eobjects.analyzer.job.runner.OutcomeSink;
+import org.eobjects.analyzer.job.runner.FilterOutcomes;
 import org.eobjects.analyzer.util.LabelUtils;
 import org.eobjects.hadoopdatacleaner.datastores.RowUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MapperEmitter {
-    
-    private static final Logger logger = LoggerFactory.getLogger(MapperEmitter.class);
 
-    public static interface Callback {
-        public void write(Text text, SortedMapWritable map) throws IOException, InterruptedException;
-    }
+	private static final Logger logger = LoggerFactory
+			.getLogger(MapperEmitter.class);
 
-    private final Callback callback;
+	public static interface Callback {
+		public void write(Text text, SortedMapWritable map) throws IOException,
+				InterruptedException;
+	}
 
-    /**
+	private final Callback callback;
+
+	/**
      * 
      */
-    public MapperEmitter(Callback callback) {
-        this.callback = callback;
-    }
-    
-    public void emit(ConsumeRowResult consumeRowResult, List<AnalyzerJob> analyzerJobs) throws IOException, InterruptedException {
-        Iterator<OutcomeSink> outcomeSinksIterator = consumeRowResult.getOutcomeSinks().iterator();
-        for (InputRow transformedRow : consumeRowResult.getRows()) {
-            SortedMapWritable rowWritable = RowUtils.inputRowToSortedMapWritable(transformedRow);
-            OutcomeSink outcomeSink = outcomeSinksIterator.next();
-            for (AnalyzerJob analyzerJob : analyzerJobs) {
-                if (isAnalyzerSatisfied(analyzerJob, outcomeSink)) {
-                    String analyzerLabel = LabelUtils.getLabel(analyzerJob);
-                    logger.info("Emitting " + transformedRow + " to " + analyzerLabel);
-                    callback.write(new Text(analyzerLabel), rowWritable);
-                }
-            }
-        }
-    }
-    
-    private boolean isAnalyzerSatisfied(AnalyzerJob analyzerJob, OutcomeSink outcomeSink) {
-        for (Outcome requirement : analyzerJob.getRequirements()) {
-            if (!outcomeSink.contains(requirement)) {
-                return false;
-            }
-        }
-        return true;
-    }
+	public MapperEmitter(Callback callback) {
+		this.callback = callback;
+	}
+
+	public void emit(ConsumeRowResult consumeRowResult,
+			List<AnalyzerJob> analyzerJobs) throws IOException,
+			InterruptedException {
+		Iterator<FilterOutcomes> filterOutcomesIterator = consumeRowResult
+				.getOutcomeSinks().iterator();
+		for (InputRow transformedRow : consumeRowResult.getRows()) {
+			SortedMapWritable rowWritable = RowUtils
+					.inputRowToSortedMapWritable(transformedRow);
+			FilterOutcomes filterOutcomes = filterOutcomesIterator.next();
+			for (AnalyzerJob analyzerJob : analyzerJobs) {
+				if (isAnalyzerSatisfied(analyzerJob, filterOutcomes)) {
+					String analyzerLabel = LabelUtils.getLabel(analyzerJob);
+					logger.info("Emitting " + transformedRow + " to "
+							+ analyzerLabel);
+					callback.write(new Text(analyzerLabel), rowWritable);
+				}
+			}
+		}
+	}
+
+	private boolean isAnalyzerSatisfied(AnalyzerJob analyzerJob,
+			FilterOutcomes filterOutcomes) {
+		ComponentRequirement componentRequirement = analyzerJob
+				.getComponentRequirement();
+		if (componentRequirement != null) {
+			for (FilterOutcome requirement : componentRequirement
+					.getProcessingDependencies()) {
+				if (!filterOutcomes.contains(requirement)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 
 }

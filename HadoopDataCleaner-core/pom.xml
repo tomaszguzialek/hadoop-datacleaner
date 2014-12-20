@@ -54,5 +54,10 @@
 			<artifactId>AnalyzerBeans-value-distribution</artifactId>
 			<version>${analyzerbeans.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.eobjects.datacleaner</groupId>
+			<artifactId>DataCleaner-core</artifactId>
+			<version>${datacleaner.version}</version>
+		</dependency>
 	</dependencies>
 </project>

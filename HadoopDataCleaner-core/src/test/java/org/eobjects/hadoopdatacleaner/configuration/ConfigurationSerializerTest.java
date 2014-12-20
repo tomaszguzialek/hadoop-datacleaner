@@ -163,11 +163,11 @@ public class ConfigurationSerializerTest {
 				.serializeAnalysisJobToXml(analyzerBeansConfiguration,
 						deserializedAnalysisJob);
 		Assert.assertTrue(serializedAnalysisJobXml
-				.contains("path=\"countrycodes_schema.countrycodes.mainFamily:country_name\""));
+				.contains("path=\"countrycodes.mainFamily:country_name\""));
 		Assert.assertTrue(serializedAnalysisJobXml
-				.contains("path=\"countrycodes_schema.countrycodes.mainFamily:iso2\""));
+				.contains("path=\"countrycodes.mainFamily:iso2\""));
 		Assert.assertTrue(serializedAnalysisJobXml
-				.contains("path=\"countrycodes_schema.countrycodes.mainFamily:iso3\""));
+				.contains("path=\"countrycodes.mainFamily:iso3\""));
 		Assert.assertTrue(serializedAnalysisJobXml
 				.contains("<descriptor ref=\"Concatenator\"/>"));
 		Assert.assertTrue(serializedAnalysisJobXml
