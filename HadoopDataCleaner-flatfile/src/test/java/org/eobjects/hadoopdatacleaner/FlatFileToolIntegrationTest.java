@@ -23,15 +23,6 @@ import java.io.File;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.metamodel.csv.CsvConfiguration;
-import org.apache.metamodel.util.FileResource;
-import org.eobjects.analyzer.configuration.AnalyzerBeansConfiguration;
-import org.eobjects.analyzer.configuration.AnalyzerBeansConfigurationImpl;
-import org.eobjects.analyzer.connection.CsvDatastore;
-import org.eobjects.analyzer.connection.Datastore;
-import org.eobjects.analyzer.connection.DatastoreCatalog;
-import org.eobjects.analyzer.connection.DatastoreCatalogImpl;
-import org.eobjects.analyzer.descriptors.ClasspathScanDescriptorProvider;
 import org.eobjects.hadoopdatacleaner.tools.FlatFileTool;
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,47 +42,5 @@ public class FlatFileToolIntegrationTest {
         int exitCode = ToolRunner.run(flatFileTool, args);
         Assert.assertEquals("The exit code of the FlatFileTool should be 0.", 0, exitCode);
     }
-
-    public static AnalyzerBeansConfiguration buildAnalyzerBeansConfigurationLocalFS(String csvFilePath) {
-        CsvConfiguration csvConfiguration = new CsvConfiguration(1, "UTF8", ';', '"', '\\');
-        Datastore datastore = new CsvDatastore(csvFilePath.substring(csvFilePath.lastIndexOf('/') + 1), new FileResource(csvFilePath), csvConfiguration);
-
-        DatastoreCatalog datastoreCatalog = new DatastoreCatalogImpl(datastore);
-
-        ClasspathScanDescriptorProvider descriptorProvider = new ClasspathScanDescriptorProvider();
-        descriptorProvider.scanPackage("org.eobjects", true);
-
-        return new AnalyzerBeansConfigurationImpl().replace(datastoreCatalog).replace(descriptorProvider);
-    }
-
-//    public static AnalysisJob buildAnalysisJob(AnalyzerBeansConfiguration configuration, String datastoreName) {
-//        AnalysisJobBuilder ajb = new AnalysisJobBuilder(configuration);
-//        try {
-//            ajb.setDatastore(datastoreName);
-//            ajb.addSourceColumns("countrycodes.csv.countrycodes.Country name",
-//                    "countrycodes.csv.countrycodes.ISO 3166-2", "countrycodes.csv.countrycodes.ISO 3166-3",
-//                    "countrycodes.csv.countrycodes.Synonym3");
-//
-//            TransformerJobBuilder<ConcatenatorTransformer> concatenator = ajb
-//                    .addTransformer(ConcatenatorTransformer.class);
-//            concatenator.addInputColumns(ajb.getSourceColumnByName("countrycodes.csv.countrycodes.ISO 3166-2"));
-//            concatenator.addInputColumns(ajb.getSourceColumnByName("countrycodes.csv.countrycodes.ISO 3166-3"));
-//            concatenator.setConfiguredProperty("Separator", "_");
-//
-//            AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer = ajb
-//                    .addAnalyzer(ValueDistributionAnalyzer.class);
-//            valueDistributionAnalyzer.addInputColumn(ajb
-//                    .getSourceColumnByName("countrycodes.csv.countrycodes.Country name"));
-//
-//            AnalyzerJobBuilder<ValueDistributionAnalyzer> valueDistributionAnalyzer2 = ajb
-//                    .addAnalyzer(ValueDistributionAnalyzer.class);
-//            valueDistributionAnalyzer2.addInputColumn(ajb
-//                    .getSourceColumnByName("countrycodes.csv.countrycodes.ISO 3166-2"));
-//
-//            return ajb.toAnalysisJob();
-//        } finally {
-//            ajb.close();
-//        }
-//    }
 
 }

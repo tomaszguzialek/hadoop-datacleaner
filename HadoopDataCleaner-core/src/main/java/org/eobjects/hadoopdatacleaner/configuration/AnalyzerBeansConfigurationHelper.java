@@ -168,7 +168,7 @@ public class AnalyzerBeansConfigurationHelper {
 
 	private static String getSchemaName(String fullyQualifiedSourceColumnName) {
 		String[] split = fullyQualifiedSourceColumnName.split("\\.");
-		if (split.length == 3) {
+		if (split.length > 2) {
 			return split[0];
 		} else {
 			// The fully-qualified name has only table name and no schema name
@@ -182,7 +182,10 @@ public class AnalyzerBeansConfigurationHelper {
 		for (String fullyQualifiedSourceColumnName : fullyQualifiedSourceColumnNames) {
 			String[] split = fullyQualifiedSourceColumnName.split("\\.");
 			String tableName = null;
-			if (split.length == 3) {
+			if (split.length == 4) {
+				// the table names is actually a filename and it contains a dot and extensions
+				tableName = split[1] + "." + split[2];
+			} else if (split.length == 3) {
 				tableName = split[1];
 			} else if (split.length == 2) {
 				tableName = split[0];
