@@ -38,6 +38,7 @@ import org.eobjects.hadoopdatacleaner.datastores.HBaseParser;
 import org.eobjects.hadoopdatacleaner.mapreduce.MapperDelegate;
 import org.eobjects.hadoopdatacleaner.mapreduce.MapperEmitter;
 import org.eobjects.hadoopdatacleaner.mapreduce.MapperEmitter.Callback;
+import org.eobjects.hadoopdatacleaner.tools.HBaseTool;
 import org.eobjects.hadoopdatacleaner.tools.HadoopDataCleanerTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,10 +62,14 @@ public class HBaseTableMapper extends
 		Configuration mapReduceConfiguration = context.getConfiguration();
 		String analysisJobXml = mapReduceConfiguration
 				.get(HadoopDataCleanerTool.ANALYSIS_JOB_XML_KEY);
+		String inputTableName = mapReduceConfiguration
+				.get(HBaseTool.INPUT_TABLE_NAME_KEY);
+		String outputTableName = mapReduceConfiguration
+				.get(HBaseTool.OUTPUT_TABLE_NAME_KEY);
 		AnalyzerBeansConfiguration analyzerBeansConfiguration;
 		try {
 			analyzerBeansConfiguration = AnalyzerBeansConfigurationHelper
-					.build(analysisJobXml);
+					.build(analysisJobXml, inputTableName, outputTableName);
 			String datastoresConfigurationLines = ConfigurationSerializer
 					.serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfiguration);
 			mapperDelegate = new MapperDelegate(datastoresConfigurationLines,

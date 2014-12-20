@@ -43,21 +43,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
-public class FlatFileReducer extends Reducer<Text, SortedMapWritable, NullWritable, Text> {
+public class FlatFileReducer extends
+		Reducer<Text, SortedMapWritable, NullWritable, Text> {
 
-    private static final Logger logger = LoggerFactory.getLogger(FlatFileReducer.class);
+	private static final Logger logger = LoggerFactory
+			.getLogger(FlatFileReducer.class);
 
-    private AnalyzerBeansConfiguration analyzerBeansConfiguration;
+	private AnalyzerBeansConfiguration analyzerBeansConfiguration;
 
-    private AnalysisJob analysisJob;
+	private AnalysisJob analysisJob;
 
-    protected void setup(Reducer<Text, SortedMapWritable, NullWritable, Text>.Context context) throws IOException,
-            InterruptedException {
-        Configuration mapReduceConfiguration = context.getConfiguration();
-        String analysisJobXml = mapReduceConfiguration.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
-        try {
-			analyzerBeansConfiguration = AnalyzerBeansConfigurationHelper.build(analysisJobXml);
-			analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
+	protected void setup(
+			Reducer<Text, SortedMapWritable, NullWritable, Text>.Context context)
+			throws IOException, InterruptedException {
+		Configuration mapReduceConfiguration = context.getConfiguration();
+		String analysisJobXml = mapReduceConfiguration
+				.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
+		String inputTableName = mapReduceConfiguration
+				.get(FlatFileTool.INPUT_TABLE_NAME_KEY);
+		String outputTableName = mapReduceConfiguration
+				.get(FlatFileTool.OUTPUT_TABLE_NAME_KEY);
+		try {
+			analyzerBeansConfiguration = AnalyzerBeansConfigurationHelper
+					.build(analysisJobXml, inputTableName, outputTableName);
+			analysisJob = ConfigurationSerializer
+					.deserializeAnalysisJobFromXml(analysisJobXml,
+							analyzerBeansConfiguration);
 			super.setup(context);
 		} catch (XPathExpressionException e) {
 			// TODO Auto-generated catch block
@@ -69,29 +80,31 @@ public class FlatFileReducer extends Reducer<Text, SortedMapWritable, NullWritab
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    }
+	}
 
-    @Override
-    public void reduce(Text analyzerKey, Iterable<SortedMapWritable> rows, Context context) throws IOException,
-            InterruptedException {
+	@Override
+	public void reduce(Text analyzerKey, Iterable<SortedMapWritable> rows,
+			Context context) throws IOException, InterruptedException {
 
-        Analyzer<?> analyzer = ConfigurationSerializer.initializeAnalyzer(analyzerKey.toString(),
-                analyzerBeansConfiguration, analysisJob);
+		Analyzer<?> analyzer = ConfigurationSerializer
+				.initializeAnalyzer(analyzerKey.toString(),
+						analyzerBeansConfiguration, analysisJob);
 
-        logger.info("analyzerKey = " + analyzerKey.toString() + " rows: ");
-        for (SortedMapWritable rowWritable : rows) {
-            InputRow inputRow = RowUtils.sortedMapWritableToInputRow(rowWritable, analysisJob.getSourceColumns());
-            analyzer.run(inputRow, 1);
+		logger.info("analyzerKey = " + analyzerKey.toString() + " rows: ");
+		for (SortedMapWritable rowWritable : rows) {
+			InputRow inputRow = RowUtils.sortedMapWritableToInputRow(
+					rowWritable, analysisJob.getSourceColumns());
+			analyzer.run(inputRow, 1);
 
-            logger.debug(RowUtils.sortedMapWritableToString(rowWritable));
+			logger.debug(RowUtils.sortedMapWritableToString(rowWritable));
 
-            Text finalText = CsvParser.toCsvText(rowWritable);
-            context.write(NullWritable.get(), finalText);
-        }
-        logger.info("end of analyzerKey = " + analyzerKey.toString() + " rows.");
+			Text finalText = CsvParser.toCsvText(rowWritable);
+			context.write(NullWritable.get(), finalText);
+		}
+		logger.info("end of analyzerKey = " + analyzerKey.toString() + " rows.");
 
-        AnalyzerResult analyzerResult = analyzer.getResult();
-        logger.debug("analyzerResult.toString(): " + analyzerResult.toString());
-    }
+		AnalyzerResult analyzerResult = analyzer.getResult();
+		logger.debug("analyzerResult.toString(): " + analyzerResult.toString());
+	}
 
 }

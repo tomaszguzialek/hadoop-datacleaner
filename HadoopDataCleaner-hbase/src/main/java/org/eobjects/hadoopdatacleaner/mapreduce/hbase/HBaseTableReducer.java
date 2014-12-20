@@ -41,29 +41,40 @@ import org.eobjects.hadoopdatacleaner.configuration.AnalyzerBeansConfigurationHe
 import org.eobjects.hadoopdatacleaner.configuration.ConfigurationSerializer;
 import org.eobjects.hadoopdatacleaner.datastores.ResultUtils;
 import org.eobjects.hadoopdatacleaner.datastores.RowUtils;
+import org.eobjects.hadoopdatacleaner.tools.HBaseTool;
 import org.eobjects.hadoopdatacleaner.tools.HadoopDataCleanerTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
-public class HBaseTableReducer extends
-        TableReducer</* KEYIN */Text, /* VALUEIN */SortedMapWritable, /* KEYOUT */NullWritable> {
+public class HBaseTableReducer
+		extends
+		TableReducer</* KEYIN */Text, /* VALUEIN */SortedMapWritable, /* KEYOUT */NullWritable> {
 
-    private static final Logger logger = LoggerFactory.getLogger(HBaseTableReducer.class);
+	private static final Logger logger = LoggerFactory
+			.getLogger(HBaseTableReducer.class);
 
-    private AnalyzerBeansConfiguration analyzerBeansConfiguration;
+	private AnalyzerBeansConfiguration analyzerBeansConfiguration;
 
-    private AnalysisJob analysisJob;
+	private AnalysisJob analysisJob;
 
-    @Override
-    protected void setup(
-            org.apache.hadoop.mapreduce.Reducer</* KEYIN */Text, /* VALUEIN */SortedMapWritable, /* KEYOUT */NullWritable, /* VALUEOUT */Mutation>.Context context)
-            throws IOException, InterruptedException {
-        Configuration mapReduceConfiguration = context.getConfiguration();
-        String analysisJobXml = mapReduceConfiguration.get(HadoopDataCleanerTool.ANALYSIS_JOB_XML_KEY);
-        try {
-			analyzerBeansConfiguration = AnalyzerBeansConfigurationHelper.build(analysisJobXml);
-			analysisJob = ConfigurationSerializer.deserializeAnalysisJobFromXml(analysisJobXml, analyzerBeansConfiguration);
+	@Override
+	protected void setup(
+			org.apache.hadoop.mapreduce.Reducer</* KEYIN */Text, /* VALUEIN */SortedMapWritable, /* KEYOUT */NullWritable, /* VALUEOUT */Mutation>.Context context)
+			throws IOException, InterruptedException {
+		Configuration mapReduceConfiguration = context.getConfiguration();
+		String analysisJobXml = mapReduceConfiguration
+				.get(HadoopDataCleanerTool.ANALYSIS_JOB_XML_KEY);
+		String inputTableName = mapReduceConfiguration
+				.get(HBaseTool.INPUT_TABLE_NAME_KEY);
+		String outputTableName = mapReduceConfiguration
+				.get(HBaseTool.OUTPUT_TABLE_NAME_KEY);
+		try {
+			analyzerBeansConfiguration = AnalyzerBeansConfigurationHelper
+					.build(analysisJobXml, inputTableName, outputTableName);
+			analysisJob = ConfigurationSerializer
+					.deserializeAnalysisJobFromXml(analysisJobXml,
+							analyzerBeansConfiguration);
 		} catch (XPathExpressionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -74,28 +85,32 @@ public class HBaseTableReducer extends
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-        super.setup(context);
-    }
+		super.setup(context);
+	}
 
-    public void reduce(Text analyzerKey, Iterable<SortedMapWritable> writableResults, Context context)
-            throws IOException, InterruptedException {
+	public void reduce(Text analyzerKey,
+			Iterable<SortedMapWritable> writableResults, Context context)
+			throws IOException, InterruptedException {
 
-        Analyzer<?> analyzer = ConfigurationSerializer.initializeAnalyzer(analyzerKey.toString(), analyzerBeansConfiguration, analysisJob);
+		Analyzer<?> analyzer = ConfigurationSerializer
+				.initializeAnalyzer(analyzerKey.toString(),
+						analyzerBeansConfiguration, analysisJob);
 
-        logger.info("analyzerKey = " + analyzerKey.toString() + " rows: ");
-        for (SortedMapWritable rowWritable : writableResults) {
-            InputRow inputRow = RowUtils.sortedMapWritableToInputRow(rowWritable, analysisJob.getSourceColumns());
-            analyzer.run(inputRow, 1);
+		logger.info("analyzerKey = " + analyzerKey.toString() + " rows: ");
+		for (SortedMapWritable rowWritable : writableResults) {
+			InputRow inputRow = RowUtils.sortedMapWritableToInputRow(
+					rowWritable, analysisJob.getSourceColumns());
+			analyzer.run(inputRow, 1);
 
-            Result result = ResultUtils.sortedMapWritableToResult(rowWritable);
-            ResultUtils.printResult(result, logger);
-            Put put = ResultUtils.preparePut(result);
-            context.write(NullWritable.get(), put);
-        }
-        logger.info("end of analyzerKey = " + analyzerKey.toString() + " rows.");
+			Result result = ResultUtils.sortedMapWritableToResult(rowWritable);
+			ResultUtils.printResult(result, logger);
+			Put put = ResultUtils.preparePut(result);
+			context.write(NullWritable.get(), put);
+		}
+		logger.info("end of analyzerKey = " + analyzerKey.toString() + " rows.");
 
-        AnalyzerResult analyzerResult = analyzer.getResult();
-        logger.debug("analyzerResult.toString(): " + analyzerResult.toString());
-    }
-    
+		AnalyzerResult analyzerResult = analyzer.getResult();
+		logger.debug("analyzerResult.toString(): " + analyzerResult.toString());
+	}
+
 }

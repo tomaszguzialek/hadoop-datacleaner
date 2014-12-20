@@ -35,25 +35,45 @@ public class AnalyzerBeansConfigurationHelper {
 
 	private static final String[] DEFAULT_PACKAGES = new String[] { "org.eobjects" };
 
-	public static AnalyzerBeansConfiguration build(String analysisJobXml)
+	public static AnalyzerBeansConfiguration build(String analysisJobXml,
+			String inputTableName, String outputTableName)
 			throws XPathExpressionException, ParserConfigurationException,
 			SAXException, IOException {
-		return build(analysisJobXml, getDefaultDescriptorProvider());
+		return build(analysisJobXml, inputTableName, outputTableName,
+				getDefaultDescriptorProvider());
 	}
 
 	public static AnalyzerBeansConfiguration build(String analysisJobXml,
+			String inputTableName, String outputTableName,
 			DescriptorProvider descriptorProvider)
 			throws XPathExpressionException, ParserConfigurationException,
 			SAXException, IOException {
 
+		String[] jobSourceColumnNames = getJobSourceColumnNames(analysisJobXml);
+
 		String datastoreName = getDatastoreName(analysisJobXml);
-		String[] fullyQualifiedSourceColumnNames = getFullyQualifiedSourceColumnNames(analysisJobXml);
-		String[] sourceColumnNames = getSourceColumnNames(fullyQualifiedSourceColumnNames);
-		String schemaName = getSchemaName(fullyQualifiedSourceColumnNames[0]);
-		String[] tableNames = getTableNames(fullyQualifiedSourceColumnNames);
+		String schemaName = getSchemaName(jobSourceColumnNames[0]);
+		if (schemaName == null) {
+			// FIXME: Get the parent directory
+			schemaName = datastoreName;
+		}
+		String[] tableNames;
+		if (hasTableName(jobSourceColumnNames[0])) {
+			tableNames = getJobTableNames(jobSourceColumnNames);
+		} else {
+			tableNames = new String[1];
+			tableNames[0] = inputTableName;
+		}
+		String[] sourceColumnNames = prepareSourceColumnNames(schemaName,
+				tableNames, jobSourceColumnNames);
 
 		return build(datastoreName, schemaName, tableNames, sourceColumnNames,
 				descriptorProvider);
+	}
+
+	private static boolean hasTableName(String jobSourceColumnName) {
+		String[] split = jobSourceColumnName.split("\\.");
+		return split.length > 1;
 	}
 
 	public static AnalyzerBeansConfiguration build(String datastoreName,
@@ -72,8 +92,13 @@ public class AnalyzerBeansConfigurationHelper {
 			tableDataProviders.add(new ArrayTableDataProvider(inputTableDef,
 					new ArrayList<Object[]>()));
 		}
-		Datastore datastore = new PojoDatastore(datastoreName, schemaName,
-				tableDataProviders);
+		Datastore datastore;
+		if (schemaName != null) {
+			datastore = new PojoDatastore(datastoreName, schemaName,
+					tableDataProviders);
+		} else {
+			datastore = new PojoDatastore(datastoreName, tableDataProviders);
+		}
 
 		DatastoreCatalog datastoreCatalog = new DatastoreCatalogImpl(datastore);
 
@@ -101,10 +126,9 @@ public class AnalyzerBeansConfigurationHelper {
 		return datastoreName;
 	}
 
-	private static String[] getFullyQualifiedSourceColumnNames(
-			String analysisJobXml) throws XPathExpressionException,
-			UnsupportedEncodingException, SAXException, IOException,
-			ParserConfigurationException {
+	private static String[] getJobSourceColumnNames(String analysisJobXml)
+			throws XPathExpressionException, UnsupportedEncodingException,
+			SAXException, IOException, ParserConfigurationException {
 		DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance()
 				.newDocumentBuilder();
 		Document document = documentBuilder.parse(new ByteArrayInputStream(
@@ -126,32 +150,44 @@ public class AnalyzerBeansConfigurationHelper {
 		}
 		return columnNames.toArray(new String[columnNodes.getLength()]);
 	}
-	
-	private static String[] getSourceColumnNames(
-			String[] fullyQualifiedSourceColumnNames) {
-		List<String> sourceColumnNames = new ArrayList<String>();
-		for (String fullyQualifiedSourceColumnName : fullyQualifiedSourceColumnNames) {
-			String[] split = fullyQualifiedSourceColumnName.split("\\.");
-			assert split.length > 2;
-			sourceColumnNames.add(split[2]);
+
+	private static String[] prepareSourceColumnNames(String schemaName,
+			String[] tableNames, String[] sourceColumnNames) {
+		if (!hasTableName(sourceColumnNames[0])) {
+			return sourceColumnNames;
+		} else {
+			List<String> strippedSourceColumnNames = new ArrayList<String>();
+			for (String sourceColumnName : sourceColumnNames) {
+				String[] splitColumnName = sourceColumnName.split("\\.");
+				strippedSourceColumnNames.add(splitColumnName[splitColumnName.length - 1]);
+			}
+			return strippedSourceColumnNames
+					.toArray(new String[strippedSourceColumnNames.size()]);
 		}
-		return sourceColumnNames.toArray(new String[sourceColumnNames.size()]);
 	}
 
 	private static String getSchemaName(String fullyQualifiedSourceColumnName) {
 		String[] split = fullyQualifiedSourceColumnName.split("\\.");
-		assert split.length > 2;
-		return split[0];
+		if (split.length == 3) {
+			return split[0];
+		} else {
+			// The fully-qualified name has only table name and no schema name
+			return null;
+		}
 	}
-	
-	private static String[] getTableNames(
+
+	private static String[] getJobTableNames(
 			String[] fullyQualifiedSourceColumnNames) {
 		List<String> tableNames = new ArrayList<String>();
 		for (String fullyQualifiedSourceColumnName : fullyQualifiedSourceColumnNames) {
 			String[] split = fullyQualifiedSourceColumnName.split("\\.");
-			assert split.length > 2;
-			String tableName = split[1];
-			if (!tableNames.contains(tableName)) {
+			String tableName = null;
+			if (split.length == 3) {
+				tableName = split[1];
+			} else if (split.length == 2) {
+				tableName = split[0];
+			}
+			if ((tableName != null) && (!tableNames.contains(tableName))) {
 				tableNames.add(tableName);
 			}
 		}

@@ -33,16 +33,18 @@ import org.xml.sax.SAXException;
 public class HadoopDataCleanerTool extends Configured {
 
 	public static final String ANALYSIS_JOB_XML_KEY = "analysis.job.xml";
+	public static final String INPUT_TABLE_NAME_KEY = "input.table.name";
+	public static final String OUTPUT_TABLE_NAME_KEY = "output.table.name";
 
 	protected AnalyzerBeansConfiguration analyzerBeansConfiguration;
 
 	protected String analysisJobXml;
 
-	public HadoopDataCleanerTool(String analysisJobXml) throws IOException,
+	public HadoopDataCleanerTool(String analysisJobXml, String inputTableName, String outputTableName) throws IOException,
 			XPathExpressionException, ParserConfigurationException,
 			SAXException {
 		this.analyzerBeansConfiguration = AnalyzerBeansConfigurationHelper
-				.build(analysisJobXml);
+				.build(analysisJobXml, inputTableName, outputTableName);
 		this.analysisJobXml = analysisJobXml;
 	}
 

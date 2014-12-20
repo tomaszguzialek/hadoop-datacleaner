@@ -42,25 +42,38 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
-public class FlatFileMapper extends Mapper<LongWritable, Text, Text, SortedMapWritable> {
+public class FlatFileMapper extends
+		Mapper<LongWritable, Text, Text, SortedMapWritable> {
 
-    @SuppressWarnings("unused")
-    private static final Logger logger = LoggerFactory.getLogger(FlatFileMapper.class);
+	@SuppressWarnings("unused")
+	private static final Logger logger = LoggerFactory
+			.getLogger(FlatFileMapper.class);
 
-    private CsvParser csvParser;
+	private CsvParser csvParser;
 
-    private MapperDelegate mapperDelegate;
+	private MapperDelegate mapperDelegate;
 
-    protected void setup(Mapper<LongWritable, Text, Text, SortedMapWritable>.Context context) throws IOException,
-            InterruptedException {
-        Configuration mapReduceConfiguration = context.getConfiguration();
-        String analysisJobXml = mapReduceConfiguration.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
-        AnalyzerBeansConfiguration analyzerBeansConfiguration;
+	protected void setup(
+			Mapper<LongWritable, Text, Text, SortedMapWritable>.Context context)
+			throws IOException, InterruptedException {
+		Configuration mapReduceConfiguration = context.getConfiguration();
+		String analysisJobXml = mapReduceConfiguration
+				.get(FlatFileTool.ANALYSIS_JOB_XML_KEY);
+		String inputTableName = mapReduceConfiguration
+				.get(FlatFileTool.INPUT_TABLE_NAME_KEY);
+		String outputTableName = mapReduceConfiguration
+				.get(FlatFileTool.OUTPUT_TABLE_NAME_KEY);
+		AnalyzerBeansConfiguration analyzerBeansConfiguration;
 		try {
-			analyzerBeansConfiguration = AnalyzerBeansConfigurationHelper.build(analysisJobXml);
-			String datastoresConfigurationLines = ConfigurationSerializer.serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfiguration);
-			this.mapperDelegate = new MapperDelegate(datastoresConfigurationLines, analysisJobXml);
-			csvParser = new CsvParser(mapperDelegate.getAnalysisJob().getSourceColumns(), ";");
+
+			analyzerBeansConfiguration = AnalyzerBeansConfigurationHelper
+					.build(analysisJobXml, inputTableName, outputTableName);
+			String datastoresConfigurationLines = ConfigurationSerializer
+					.serializeAnalyzerBeansConfigurationDataStores(analyzerBeansConfiguration);
+			this.mapperDelegate = new MapperDelegate(
+					datastoresConfigurationLines, analysisJobXml);
+			csvParser = new CsvParser(mapperDelegate.getAnalysisJob()
+					.getSourceColumns(), ";");
 			super.setup(context);
 		} catch (XPathExpressionException e) {
 			// TODO Auto-generated catch block
@@ -72,30 +85,33 @@ public class FlatFileMapper extends Mapper<LongWritable, Text, Text, SortedMapWr
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    }
+	}
 
-    @Override
-    public void map(LongWritable key, Text csvLine, final Context context) throws IOException, InterruptedException {
-        if (key.get() == 0L) {
-        	context.getConfiguration().set("csv.header.line", csvLine.toString());
-        	csvParser.parseHeaderRow(csvLine);
-        } else {
-        	while (context.getConfiguration().get("csv.header.line") == null) {
-        		// Wait for the header to be read.
-        	}
-        	InputRow inputRow = csvParser.prepareRow(csvLine);
-        	
-        	Callback mapperEmitterCallback = new MapperEmitter.Callback() {
-        		
-        		public void write(Text key, SortedMapWritable row) throws IOException, InterruptedException {
-        			context.write(key, row);
-        			
-        		}
-        	};
-        	
-        	mapperDelegate.run(inputRow, mapperEmitterCallback);
-        	
-        }
-    	
-    }
+	@Override
+	public void map(LongWritable key, Text csvLine, final Context context)
+			throws IOException, InterruptedException {
+		if (key.get() == 0L) {
+			context.getConfiguration().set("csv.header.line",
+					csvLine.toString());
+			csvParser.parseHeaderRow(csvLine);
+		} else {
+			while (context.getConfiguration().get("csv.header.line") == null) {
+				// Wait for the header to be read.
+			}
+			InputRow inputRow = csvParser.prepareRow(csvLine);
+
+			Callback mapperEmitterCallback = new MapperEmitter.Callback() {
+
+				public void write(Text key, SortedMapWritable row)
+						throws IOException, InterruptedException {
+					context.write(key, row);
+
+				}
+			};
+
+			mapperDelegate.run(inputRow, mapperEmitterCallback);
+
+		}
+
+	}
 }

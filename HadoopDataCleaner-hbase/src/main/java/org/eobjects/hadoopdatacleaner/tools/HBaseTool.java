@@ -41,9 +41,9 @@ import org.xml.sax.SAXException;
 
 public final class HBaseTool extends HadoopDataCleanerTool implements Tool {
 
-	public HBaseTool(String analysisJobXml) throws IOException,
+	public HBaseTool(String analysisJobXml, String inputTableName, String outputTableName) throws IOException,
 			XPathExpressionException, ParserConfigurationException, SAXException {
-        super(analysisJobXml);
+        super(analysisJobXml, inputTableName, outputTableName);
     }
 
     public int run(String[] args) throws Exception {
@@ -58,6 +58,8 @@ public final class HBaseTool extends HadoopDataCleanerTool implements Tool {
 
         Configuration mapReduceConfiguration = HBaseConfiguration.create();
         mapReduceConfiguration.set(ANALYSIS_JOB_XML_KEY, analysisJobXml);
+        mapReduceConfiguration.set(INPUT_TABLE_NAME_KEY, inputTableName);
+        mapReduceConfiguration.set(OUTPUT_TABLE_NAME_KEY, outputTableName);
 
         return runMapReduceJob(inputTableName, outputTableName, mapReduceConfiguration);
     }
@@ -95,11 +97,15 @@ public final class HBaseTool extends HadoopDataCleanerTool implements Tool {
 
     public static void main(String[] args) throws Exception {
         String analysisJobPath;
+        String inputTableName;
+        String outputTableName;
         if (args.length == 3) {
             analysisJobPath = args[0];
+            inputTableName = args[1];
+            outputTableName = args[2];
 
             String analysisJobXml = FileUtils.readFileToString(new File(analysisJobPath));
-            HBaseTool hBaseTool = new HBaseTool(analysisJobXml);
+            HBaseTool hBaseTool = new HBaseTool(analysisJobXml, inputTableName, outputTableName);
             ToolRunner.run(hBaseTool, args);
         } else {
             System.err.println("Incorrect number of arguments. Expected: <analysisJobPath> <inputTableName> <outputTableName>");

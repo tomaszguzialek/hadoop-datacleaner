@@ -21,7 +21,6 @@ package org.eobjects.hadoopdatacleaner.tools;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
@@ -43,11 +42,11 @@ import org.xml.sax.SAXException;
 
 public final class FlatFileTool extends HadoopDataCleanerTool implements Tool {
 
-	public FlatFileTool(String analysisJobXml) throws IOException,
+	public FlatFileTool(String analysisJobXml, String inputTableName, String outputTableName) throws IOException,
 			XPathExpressionException, ParserConfigurationException,
 			SAXException {
 
-		super(analysisJobXml);
+		super(analysisJobXml, inputTableName, outputTableName);
 	}
 
 	public int run(String[] args) throws Exception {
@@ -86,10 +85,6 @@ public final class FlatFileTool extends HadoopDataCleanerTool implements Tool {
 
 		job.setNumReduceTasks(1);
 
-		// TODO externalize to args?
-		// mapReduceConfiguration.addResource(new
-		// Path("/etc/hadoop/conf/core-site.xml"));
-
 		FileSystem fileSystem = FileSystem.get(mapReduceConfiguration);
 		if (fileSystem.exists(new Path(output)))
 			fileSystem.delete(new Path(output), true);
@@ -99,26 +94,24 @@ public final class FlatFileTool extends HadoopDataCleanerTool implements Tool {
 	}
 
 	public static void main(String[] args) throws Exception {
-		long start = System.nanoTime();
-
 		String analysisJobPath;
+		String inputTableName;
+		String outputTableName;
 		if (args.length == 3) {
 			analysisJobPath = args[0];
-
+			
+			inputTableName = new File(args[0]).getName();
+			outputTableName = new File(args[1]).getName();
+			
 			String analysisJobXml = FileUtils.readFileToString(new File(
 					analysisJobPath));
 			FlatFileTool hadoopDataCleanerTool = new FlatFileTool(
-					analysisJobXml);
+					analysisJobXml, inputTableName, outputTableName);
 			ToolRunner.run(hadoopDataCleanerTool, args);
 		} else {
 			System.err
 					.println("Incorrect number of arguments. Expected: <analysisJobPath> <input> output");
 		}
-		long stop = System.nanoTime();
-		long executionTime = stop - start;
-		System.out.println("Execution time: "
-				+ TimeUnit.SECONDS.convert(executionTime, TimeUnit.NANOSECONDS)
-				+ " (start: " + start + ", stop: " + stop + ")");
 	}
 
 }

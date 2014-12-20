@@ -47,7 +47,7 @@ public class FlatFileToolIntegrationTest {
         args[1] = "src/test/resources/countrycodes.csv";
         args[2] = "output";
         String analysisJobXml = FileUtils.readFileToString(new File(args[0]));
-        flatFileTool = new FlatFileTool(analysisJobXml);
+        flatFileTool = new FlatFileTool(analysisJobXml, "countrycodes.csv", "output");
         int exitCode = ToolRunner.run(flatFileTool, args);
         Assert.assertEquals("The exit code of the FlatFileTool should be 0.", 0, exitCode);
     }
