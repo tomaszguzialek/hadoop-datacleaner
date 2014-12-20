@@ -36,7 +36,6 @@ import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
 import org.apache.hadoop.mrunit.types.Pair;
-import org.eobjects.hadoopdatacleaner.configuration.AnalyzerBeansConfigurationHelper;
 import org.eobjects.hadoopdatacleaner.tools.FlatFileTool;
 import org.junit.Assert;
 import org.junit.Before;
@@ -126,7 +125,7 @@ public class FlatFileMapperReducerTest {
 		header.put(new Text("Synonym3"), new Text("Synonym3"));
 		rows.add(header);
 
-		reduceDriver.withInput(new Text("Value distribution (Country name)"),
+		reduceDriver.withInput(new Text("Create CSV file (5 columns)"),
 				rows);
 		reduceDriver
 				.withOutput(
@@ -146,11 +145,11 @@ public class FlatFileMapperReducerTest {
 		poland.put(new Text("ISO 3166-3"), new Text("POL"));
 		rows.add(poland);
 
-		reduceDriver.withInput(new Text("Value distribution (Country name)"),
+		reduceDriver.withInput(new Text("Create CSV file (5 columns)"),
 				rows);
 		reduceDriver.withOutput(NullWritable.get(), new Text("Poland;PL;POL"));
 		reduceDriver.runTest();
 
 	}
-
+	
 }
